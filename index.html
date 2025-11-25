@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Jawara Susun Kata - SDIT Qurratu A'yun</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Amiri', serif; touch-action: none; overflow: hidden; }
+        .font-latin { font-family: 'Fredoka', sans-serif; }
+        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(5px); }
+        
+        .dragging-active { 
+            position: fixed !important; z-index: 9999 !important; pointer-events: none; 
+            transform: scale(1.2); box-shadow: 0 25px 30px -5px rgba(0, 0, 0, 0.4);
+        }
+
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .anim-entry { animation: fadeInUp 0.6s ease-out forwards; }
+        
+        @keyframes flashSuccess { 0% { background-color: white; } 50% { background-color: #d1fae5; } 100% { background-color: white; } }
+        .flash-anim { animation: flashSuccess 0.5s ease-out; }
+
+        @keyframes pulse-green { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
+        .timer-bonus { animation: pulse-green 0.5s; color: #10b981; font-weight: bold; }
+        
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1e293b; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+    </style>
+</head>
+<body class="bg-slate-900 h-screen w-screen flex flex-col items-center justify-center relative overflow-hidden">
+
+    <div class="absolute inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute -top-20 -left-20 w-96 h-96 bg-emerald-600 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
+        <div class="absolute top-0 -right-20 w-96 h-96 bg-yellow-600 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
+        <div class="absolute -bottom-32 left-20 w-96 h-96 bg-blue-600 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-4000"></div>
+    </div>
+
+    <div id="screen-splash" class="absolute inset-0 z-[100] bg-gradient-to-br from-slate-900 to-emerald-950 flex flex-col items-center justify-center text-white font-latin text-center px-4" dir="ltr">
+        <img src="logo.png" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2990/2990264.png'" alt="Logo" class="w-32 h-32 md:w-40 md:h-40 mb-6 object-contain animate-bounce drop-shadow-2xl">
+        <h1 class="text-5xl md:text-7xl font-bold mb-2 text-yellow-400 font-serif drop-shadow-lg opacity-0 anim-entry">JAWARA SUSUN KATA</h1>
+        <h2 class="text-3xl md:text-4xl font-bold text-white font-serif mb-8 opacity-0 anim-entry delay-100">EDISI LENGKAP</h2>
+        <div class="bg-white/10 px-6 py-3 rounded-full mb-12 border border-white/20 opacity-0 anim-entry delay-200 backdrop-blur-sm">
+            <p class="text-emerald-300 text-sm md:text-lg tracking-widest font-bold uppercase">SDIT Qurratu A'yun Al-Islami Maros</p>
+        </div>
+        <button onclick="enterHome()" class="px-12 py-4 rounded-2xl bg-emerald-500 text-white text-xl font-bold hover:bg-emerald-400 transition-all shadow-lg border-b-4 border-emerald-700 active:translate-y-1 active:border-b-0 opacity-0 anim-entry delay-300">MULAI ▶</button>
+    </div>
+
+    <div id="screen-home" class="hidden absolute inset-0 z-40 flex flex-col items-center justify-center text-white font-latin" dir="ltr">
+        <h2 class="text-4xl font-bold mb-8 text-white drop-shadow-md">Pilih Jumlah Pemain</h2>
+        <div class="flex gap-6 mb-10">
+            <button onclick="goToInput(1)" class="bg-white text-emerald-800 w-48 py-6 rounded-3xl shadow-xl hover:bg-yellow-300 hover:scale-105 transition-all flex flex-col items-center gap-2 border-b-8 border-emerald-900 active:border-b-0 active:translate-y-2"><span class="text-5xl">👤</span><span class="text-xl font-bold">1 Pemain</span></button>
+            <button onclick="goToInput(2)" class="bg-white text-emerald-800 w-48 py-6 rounded-3xl shadow-xl hover:bg-yellow-300 hover:scale-105 transition-all flex flex-col items-center gap-2 border-b-8 border-emerald-900 active:border-b-0 active:translate-y-2"><span class="text-5xl">👥</span><span class="text-xl font-bold">2 Pemain</span></button>
+        </div>
+        <div class="bg-black/40 p-4 rounded-xl text-center text-slate-300 text-sm">Tips: Waktu akan bertambah jika jawaban benar!</div>
+    </div>
+
+    <div id="screen-input" class="hidden absolute inset-0 z-50 bg-emerald-900 flex flex-col items-center justify-center text-white font-latin px-4" dir="ltr">
+        <h2 class="text-3xl font-bold mb-8">Masukkan Nama</h2>
+        <div id="input-container" class="flex flex-col md:flex-row gap-6 mb-10 w-full max-w-3xl justify-center"></div>
+        <div class="flex gap-4">
+            <button onclick="showScreen('screen-home')" class="px-6 py-3 rounded-xl text-slate-300 hover:text-white">Kembali</button>
+            <button onclick="validateToTheme()" class="bg-yellow-400 text-emerald-900 px-12 py-4 rounded-2xl font-bold text-2xl shadow-xl hover:bg-yellow-300 hover:scale-105 transition-all border-b-4 border-yellow-600 active:border-b-0 active:translate-y-1">Lanjut</button>
+        </div>
+    </div>
+
+    <div id="screen-theme" class="hidden absolute inset-0 z-50 bg-slate-900 flex flex-col items-center justify-start text-white font-latin px-4 overflow-hidden" dir="ltr">
+        <div class="w-full max-w-5xl flex flex-col h-full py-8">
+            <h2 class="text-4xl font-bold mb-2 text-yellow-300 text-center shrink-0">Pilih Sesi / Tema</h2>
+            <p class="text-slate-400 mb-6 text-center shrink-0">Silakan pilih kategori hafalan</p>
+            <div class="flex-1 overflow-y-auto pr-2 pb-20">
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 w-full" id="theme-container"></div>
+            </div>
+            <button onclick="showScreen('screen-input')" class="absolute bottom-6 left-1/2 -translate-x-1/2 text-slate-400 hover:text-white underline">Kembali</button>
+        </div>
+    </div>
+
+    <div id="game-ui" class="hidden absolute top-0 left-0 right-0 h-24 px-4 flex justify-between items-center z-40 bg-slate-900/90 backdrop-blur-md text-white font-latin shadow-xl border-b border-white/10" dir="ltr">
+        <div class="flex items-center gap-4 w-1/3">
+            <button onclick="confirmHome()" class="bg-slate-700 hover:bg-red-500 text-white p-3 rounded-xl transition-colors">🏠</button>
+            <div id="ui-p2" class="hidden flex-col bg-blue-900/50 px-4 py-2 rounded-xl border-l-4 border-blue-500 min-w-[140px]">
+                <div class="flex justify-between items-center">
+                    <span id="name-p2" class="text-blue-200 text-xs font-bold uppercase truncate max-w-[80px]">P2</span>
+                    <span id="lvl-p2" class="bg-blue-600 text-white text-[10px] px-2 rounded-full">LV 1</span>
+                </div>
+                <span id="score-p2" class="text-3xl font-bold text-white leading-none">0</span>
+            </div>
+        </div>
+        <div class="flex flex-col items-center w-1/3">
+            <div id="timer-box" class="bg-slate-800 px-6 py-2 rounded-full border-2 border-slate-600 shadow-inner flex flex-col items-center">
+                <span id="timer-display" class="text-4xl font-bold text-yellow-400 tabular-nums">60</span>
+                <span class="text-[10px] text-slate-400 uppercase tracking-widest">Waktu</span>
+            </div>
+        </div>
+        <div id="ui-p1" class="flex flex-col items-end w-1/3">
+            <div class="flex flex-col items-end bg-emerald-900/50 px-4 py-2 rounded-xl border-r-4 border-emerald-500 min-w-[140px]">
+                <div class="flex justify-between items-center gap-2 w-full">
+                    <span id="lvl-p1" class="bg-emerald-600 text-white text-[10px] px-2 rounded-full">LV 1</span>
+                    <span id="name-p1" class="text-emerald-200 text-xs font-bold uppercase truncate max-w-[80px]">P1</span>
+                </div>
+                <span id="score-p1" class="text-3xl font-bold text-white leading-none">0</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="game-container" class="w-full h-full hidden pt-28 pb-4 px-2 md:px-4 gap-4 justify-center items-stretch relative bg-slate-100 z-10"></div>
+
+    <div id="screen-result" class="hidden absolute inset-0 z-[60] bg-slate-900/95 backdrop-blur-xl flex flex-col items-center justify-center font-latin text-white" dir="ltr">
+        <h2 class="text-5xl font-bold mb-4 text-yellow-400">WAKTU HABIS!</h2>
+        <div id="podium-area" class="flex gap-6 mb-8 items-end justify-center w-full"></div>
+        <div class="bg-white/10 p-6 rounded-xl w-full max-w-lg mb-8 backdrop-blur-md border border-white/10 text-center">
+            <h3 class="font-bold text-emerald-300 mb-2">Tema yang Dimainkan</h3>
+            <div id="played-theme-name" class="text-2xl font-bold text-white mb-4 border-b border-white/20 pb-4"></div>
+            <p class="text-slate-300 text-sm">Hebat! Terus tingkatkan hafalanmu.</p>
+        </div>
+        <button onclick="showScreen('screen-theme')" class="bg-emerald-500 hover:bg-emerald-600 text-white px-10 py-4 rounded-xl text-xl font-bold shadow-lg transition-transform hover:-translate-y-1">Main Tema Lain ⟳</button>
+    </div>
+
+    <script>
+        // --- DATABASE KOSAKATA ---
+        const themesDB = {
+            "PRIBADI 1": [
+                {t:"قَلَنْسُوَةٌ",m:"Peci",s:[{c:"قَ",d:["ك"]},{c:"لَ",d:["لِ"]},{c:"نْ",d:["م"]},{c:"سُ",d:["ش"]},{c:"وَ",d:["و"]},{c:"ةٌ",d:["ت"]}]},
+                {t:"حِجَابٌ",m:"Jilbab",s:[{c:"حِ",d:["خ"]},{c:"جَ",d:["ح"]},{c:"ا",d:[]},{c:"بٌ",d:["بٍ"]}]},
+                {t:"قَمِيصٌ",m:"Kemeja",s:[{c:"قَ",d:["ك"]},{c:"مِ",d:["مَ"]},{c:"ي",d:[]},{c:"صٌ",d:["س"]}]},
+                {t:"حَقِيبَةٌ",m:"Tas",s:[{c:"حَ",d:["خ"]},{c:"قِ",d:["ك"]},{c:"ي",d:[]},{c:"بَ",d:["بِ"]},{c:"ةٌ",d:["ت"]}]},
+                {t:"حِذَاءٌ",m:"Sepatu",s:[{c:"حِ",d:["خ"]},{c:"ذَ",d:["ز"]},{c:"ا",d:[]},{c:"ءٌ",d:["ء"]}]},
+                {t:"جَوْرَبٌ",m:"Kaos kaki",s:[{c:"جَ",d:["ح"]},{c:"وْ",d:["و"]},{c:"رَ",d:["رِ"]},{c:"بٌ",d:["بٍ"]}]},
+                {t:"بَنْطَلُونٌ",m:"Celana panjang",s:[{c:"بَ",d:["بِ"]},{c:"نْ",d:["م"]},{c:"طَ",d:["ت"]},{c:"لُ",d:["لِ"]},{c:"و",d:[]},{c:"نٌ",d:["نٍ"]}]},
+                {t:"تَنُورَةٌ",m:"Rok",s:[{c:"تَ",d:["ط"]},{c:"نُّ",d:["ن"]},{c:"و",d:[]},{c:"رَ",d:["رِ"]},{c:"ةٌ",d:["ت"]}]},
+                {t:"سَاعَةٌ",m:"Jam",s:[{c:"سَ",d:["ص"]},{c:"ا",d:[]},{c:"عَ",d:["ء"]},{c:"ةٌ",d:["ت"]}]},
+                {t:"قُبَّعَةٌ",m:"Topi",s:[{c:"قُ",d:["ك"]},{c:"بَّ",d:["ب"]},{c:"عَ",d:["غ"]},{c:"ةٌ",d:["ت"]}]}
+            ],
+            "PRIBADI 2": [
+                {t:"سِرْوَالٌ",m:"Celana pendek",s:[{c:"سِ",d:["ص"]},{c:"رْ",d:["رَ"]},{c:"وَا",d:["وَ"]},{c:"لٌ",d:["لٍ"]}]},
+                {t:"إِزَارٌ",m:"Sarung",s:[{c:"إِ",d:["ا"]},{c:"زَ",d:["ذ"]},{c:"ا",d:[]},{c:"رٌ",d:["رٍ"]}]},
+                {t:"مُشَمَّعٌ",m:"Jas hujan",s:[{c:"مُ",d:["مَ"]},{c:"شَ",d:["س"]},{c:"مَّ",d:["مَ"]},{c:"عٌ",d:["غ"]}]},
+                {t:"مِظَلَّةٌ",m:"Payung",s:[{c:"مِ",d:["مَ"]},{c:"ظَ",d:["ز"]},{c:"لَّ",d:["لَ"]},{c:"ةٌ",d:["ت"]}]},
+                {t:"عُلْبَةٌ",m:"Kotak makan",s:[{c:"عُ",d:["غ"]},{c:"لْ",d:["لَ"]},{c:"بَ",d:["بِ"]},{c:"ةٌ",d:["ت"]}]},
+                {t:"زُجَاجَةٌ",m:"Botol minum",s:[{c:"زُ",d:["ذ"]},{c:"جَ",d:["ح"]},{c:"ا",d:[]},{c:"جَ",d:["ح"]},{c:"ةٌ",d:["ت"]}]},
+                {t:"حِزَامٌ",m:"Ikat pinggang",s:[{c:"حِ",d:["خ"]},{c:"زَ",d:["ذ"]},{c:"ا",d:[]},{c:"مٌ",d:["ن"]}]},
+                {t:"مِنْدِيلٌ",m:"Saputangan",s:[{c:"مِ",d:["مَ"]},{c:"نْ",d:["م"]},{c:"دِ",d:["ض"]},{c:"ي",d:[]},{c:"لٌ",d:["لٍ"]}]},
+                {t:"نَعْلٌ",m:"Sandal",s:[{c:"نَ",d:["م"]},{c:"عْ",d:["غ"]},{c:"لٌ",d:["لٍ"]}]}
+            ],
+            "ALAT TULIS": [
+                {t:"كِتَابٌ",m:"Buku cetak",s:[{c:"كِ",d:["ق"]},{c:"تَ",d:["ط"]},{c:"ا",d:[]},{c:"بٌ",d:["بٍ"]}]},
+                {t:"دَفْتَرٌ",m:"Buku tulis",s:[{c:"دَ",d:["ذ"]},{c:"فْ",d:["فَ"]},{c:"تَ",d:["ط"]},{c:"رٌ",d:["رٍ"]}]},
+                {t:"بَرَّايَةٌ",m:"Peraut",s:[{c:"بَ",d:["ت"]},{c:"رَّ",d:["رَ"]},{c:"ا",d:[]},{c:"يَ",d:["ي"]},{c:"ةٌ",d:["ت"]}]},
+                {t:"مِسْطَرَةٌ",m:"Penggaris",s:[{c:"مِ",d:["مَ"]},{c:"سْ",d:["ص"]},{c:"طَ",d:["ت"]},{c:"رَ",d:["رِ"]},{c:"ةٌ",d:["ت"]}]},
+                {t:"قَلَمٌ",m:"Pulpen",s:[{c:"قَ",d:["ك"]},{c:"لَ",d:["لِ"]},{c:"مٌ",d:["ن"]}]},
+                {t:"مِرْسَمٌ",m:"Pensil",s:[{c:"مِ",d:["مُ"]},{c:"رْ",d:["رَ"]},{c:"سَ",d:["ش"]},{c:"مٌ",d:["ن"]}]},
+                {t:"مُزِيلٌ",m:"Tipe-X",s:[{c:"مُ",d:["مَ"]},{c:"زِ",d:["ذ"]},{c:"ي",d:[]},{c:"لٌ",d:["لٍ"]}]},
+                {t:"مِمْحَاةٌ",m:"Penghapus",s:[{c:"مِ",d:["مَ"]},{c:"مْ",d:["ن"]},{c:"حَ",d:["خ"]},{c:"ا",d:[]},{c:"ةٌ",d:["ت"]}]},
+                {t:"حِبْرٌ",m:"Tinta",s:[{c:"حِ",d:["خ"]},{c:"بْ",d:["بَ"]},{c:"رٌ",d:["رٍ"]}]},
+                {t:"مِقْلَمَةٌ",m:"Tempat Pulpen",s:[{c:"مِ",d:["مَ"]},{c:"قْ",d:["ك"]},{c:"لَ",d:["لِ"]},{c:"مَ",d:["مُ"]},{c:"ةٌ",d:["ت"]}]}
+            ],
+            "KANTOR & SEKOLAH": [
+                {t:"شَهَادَةٌ",m:"Ijazah",s:[{c:"شَ",d:["س"]},{c:"هَ",d:["ح"]},{c:"ا",d:[]},{c:"دَ",d:["ذ"]},{c:"ةٌ",d:["ت"]}]},
+                {t:"خَرِيطَةٌ",m:"Peta",s:[{c:"خَ",d:["ح"]},{c:"رِ",d:["رَ"]},{c:"ي",d:[]},{c:"طَ",d:["ت"]},{c:"ةٌ",d:["ت"]}]},
+                {t:"سَبُّورَةٌ",m:"Papan tulis",s:[{c:"سَ",d:["ص"]},{c:"بُّ",d:["بُ"]},{c:"و",d:[]},{c:"رَ",d:["رِ"]},{c:"ةٌ",d:["ت"]}]},
+                {t:"قِرْطَاسٌ",m:"Kertas",s:[{c:"قِ",d:["ك"]},{c:"رْ",d:["رَ"]},{c:"طَ",d:["ت"]},{c:"ا",d:[]},{c:"سٌ",d:["ش"]}]},
+                {t:"كَشْفٌ",m:"Daftar hadir",s:[{c:"كَ",d:["ق"]},{c:"شْ",d:["س"]},{c:"فٌ",d:["فٍ"]}]},
+                {t:"غِرَاءٌ",m:"Lem",s:[{c:"غِ",d:["ع"]},{c:"رَ",d:["رِ"]},{c:"ا",d:[]},{c:"ءٌ",d:["ع"]}]},
+                {t:"غِلَافٌ",m:"Amplop",s:[{c:"غِ",d:["ع"]},{c:"لَ",d:["لِ"]},{c:"ا",d:[]},{c:"فٌ",d:["فٍ"]}]},
+                {t:"تَقْوِيمٌ",m:"Kalender",s:[{c:"تَ",d:["ط"]},{c:"قْ",d:["ك"]},{c:"وِ",d:["و"]},{c:"ي",d:[]},{c:"مٌ",d:["ن"]}]},
+                {t:"رِسَالَةٌ",m:"Surat",s:[{c:"رِ",d:["رَ"]},{c:"سَ",d:["ص"]},{c:"ا",d:[]},{c:"لَ",d:["لِ"]},{c:"ةٌ",d:["ت"]}]},
+                {t:"مَلَفٌ",m:"Map",s:[{c:"مَ",d:["ن"]},{c:"لَ",d:["لِ"]},{c:"فٌ",d:["فٍ"]}]}
+            ],
+            "SEKOLAH": [
+                {t:"مَدْرَسَةٌ",m:"Sekolah",s:[{c:"مَ",d:["مِ"]},{c:"دْ",d:["ذ"]},{c:"رَ",d:["رِ"]},{c:"سَ",d:["ص"]},{c:"ةٌ",d:["ت"]}]},
+                {t:"فَصْلٌ",m:"Kelas",s:[{c:"فَ",d:["ق"]},{c:"صْ",d:["س"]},{c:"لٌ",d:["لٍ"]}]},
+                {t:"مَكْتَبَةٌ",m:"Perpustakaan",s:[{c:"مَ",d:["مِ"]},{c:"كْ",d:["ق"]},{c:"تَ",d:["ط"]},{c:"بَ",d:["بِ"]},{c:"ةٌ",d:["ت"]}]},
+                {t:"مَعْمَلٌ",m:"Laboratorium",s:[{c:"مَ",d:["ن"]},{c:"عْ",d:["غ"]},{c:"مَ",d:["مِ"]},{c:"لٌ",d:["لٍ"]}]},
+                {t:"مُصَلَّى",m:"Musala",s:[{c:"مُ",d:["مَ"]},{c:"صَ",d:["س"]},{c:"لَّ",d:["لَ"]},{c:"ى",d:[]}]},
+                {t:"سَاحَةٌ",m:"Halaman",s:[{c:"سَ",d:["ص"]},{c:"ا",d:[]},{c:"حَ",d:["خ"]},{c:"ةٌ",d:["ت"]}]},
+                {t:"مَقْصَفٌ",m:"Kantin",s:[{c:"مَ",d:["مِ"]},{c:"قْ",d:["ك"]},{c:"صَ",d:["س"]},{c:"فٌ",d:["فٍ"]}]},
+                {t:"مَوْقِفٌ",m:"Parkiran",s:[{c:"مَ",d:["ن"]},{c:"وْ",d:["و"]},{c:"قِ",d:["ك"]},{c:"فٌ",d:["فٍ"]}]},
+                {t:"حَمَّامٌ",m:"Kamar mandi",s:[{c:"حَ",d:["خ"]},{c:"مَّ",d:["مَ"]},{c:"ا",d:[]},{c:"مٌ",d:["ن"]}]},
+                {t:"مِرْحَاضٌ",m:"WC",s:[{c:"مِ",d:["مَ"]},{c:"رْ",d:["رَ"]},{c:"حَ",d:["خ"]},{c:"ا",d:[]},{c:"ضٌ",d:["ظ"]}]}
+            ],
+            "BAGIAN RUMAH": [
+                {t:"بَيْتٌ",m:"Rumah",s:[{c:"بَ",d:["ت"]},{c:"يْ",d:["ي"]},{c:"تٌ",d:["ط"]}]},
+                {t:"بَابٌ",m:"Pintu",s:[{c:"بَ",d:["ت"]},{c:"ا",d:[]},{c:"بٌ",d:["بٍ"]}]},
+                {t:"نَافِذَةٌ",m:"Jendela",s:[{c:"نَ",d:["م"]},{c:"ا",d:[]},{c:"فِ",d:["فَ"]},{c:"ذَ",d:["ز"]},{c:"ةٌ",d:["ت"]}]},
+                {t:"سَقْفٌ",m:"Atap",s:[{c:"سَ",d:["ص"]},{c:"قْ",d:["ك"]},{c:"فٌ",d:["فٍ"]}]},
+                {t:"بِلَاطٌ",m:"Lantai",s:[{c:"بِ",d:["بَ"]},{c:"لَ",d:["لِ"]},{c:"ا",d:[]},{c:"طٌ",d:["ت"]}]},
+                {t:"سُورٌ",m:"Pagar",s:[{c:"سُ",d:["ش"]},{c:"و",d:[]},{c:"رٌ",d:["رٍ"]}]},
+                {t:"جِدَارٌ",m:"Dinding",s:[{c:"جِ",d:["ح"]},{c:"دَ",d:["ذ"]},{c:"ا",d:[]},{c:"رٌ",d:["رٍ"]}]},
+                {t:"سُلَّمٌ",m:"Tangga",s:[{c:"سُ",d:["ص"]},{c:"لَّ",d:["لَ"]},{c:"مٌ",d:["ن"]}]},
+                {t:"مَطْبَخٌ",m:"Dapur",s:[{c:"مَ",d:["مِ"]},{c:"طْ",d:["ت"]},{c:"بَ",d:["بِ"]},{c:"خٌ",d:["ح"]}]},
+                {t:"غُرْفَةٌ",m:"Kamar",s:[{c:"غُ",d:["ع"]},{c:"رْ",d:["رَ"]},{c:"فَ",d:["فِ"]},{c:"ةٌ",d:["ت"]}]}
+            ],
+            "ISI RUMAH": [
+                {t:"مَكْتَبٌ",m:"Meja",s:[{c:"مَ",d:["مِ"]},{c:"كْ",d:["ق"]},{c:"تَ",d:["ط"]},{c:"بٌ",d:["بٍ"]}]},
+                {t:"كُرْسِيٌّ",m:"Kursi",s:[{c:"كُ",d:["ق"]},{c:"رْ",d:["رَ"]},{c:"سِ",d:["ش"]},{c:"يٌّ",d:["ي"]}]},
+                {t:"خِزَانَةٌ",m:"Lemari",s:[{c:"خِ",d:["ح"]},{c:"زَ",d:["ذ"]},{c:"ا",d:[]},{c:"نَ",d:["م"]},{c:"ةٌ",d:["ت"]}]},
+                {t:"رَفٌّ",m:"Rak",s:[{c:"رَ",d:["ز"]},{c:"فٌّ",d:["ف"]}]},
+                {t:"سَرِيرٌ",m:"Ranjang",s:[{c:"سَ",d:["ص"]},{c:"رِ",d:["رَ"]},{c:"ي",d:[]},{c:"رٌ",d:["رٍ"]}]},
+                {t:"وِسَادَةٌ",m:"Bantal",s:[{c:"وِ",d:["وَ"]},{c:"سَ",d:["ص"]},{c:"ا",d:[]},{c:"دَ",d:["ذ"]},{c:"ةٌ",d:["ت"]}]},
+                {t:"مِكْنَسَةٌ",m:"Sapu",s:[{c:"مِ",d:["مَ"]},{c:"كْ",d:["ق"]},{c:"نَ",d:["م"]},{c:"سَ",d:["ش"]},{c:"ةٌ",d:["ت"]}]},
+                {t:"مَزْبَلَةٌ",m:"Tempat sampah",s:[{c:"مَ",d:["ن"]},{c:"زْ",d:["ذ"]},{c:"بَ",d:["بِ"]},{c:"لَ",d:["لِ"]},{c:"ةٌ",d:["ت"]}]},
+                {t:"مِرْآةٌ",m:"Cermin",s:[{c:"مِ",d:["مَ"]},{c:"رْ",d:["رَ"]},{c:"آ",d:["ا"]},{c:"ةٌ",d:["ت"]}]},
+                {t:"مُشْطٌ",m:"Sisir",s:[{c:"مُ",d:["مَ"]},{c:"شْ",d:["س"]},{c:"طٌ",d:["ت"]}]}
+            ],
+            "TEMPAT UMUM": [
+                {t:"دُكَّانٌ",m:"Toko",s:[{c:"دُ",d:["ذ"]},{c:"كَّ",d:["ق"]},{c:"ا",d:[]},{c:"نٌ",d:["نٍ"]}]},
+                {t:"مَسْجِدٌ",m:"Masjid",s:[{c:"مَ",d:["مِ"]},{c:"سْ",d:["ص"]},{c:"جِ",d:["ح"]},{c:"دٌ",d:["ذ"]}]},
+                {t:"مُسْتَشْفًى",m:"Rumah sakit",s:[{c:"مُ",d:["مَ"]},{c:"سْ",d:["ص"]},{c:"تَ",d:["ط"]},{c:"شْ",d:["س"]},{c:"فً",d:["فَ"]},{c:"ى",d:[]}]},
+                {t:"صَيْدَلِيَّةٌ",m:"Apotek",s:[{c:"صَ",d:["س"]},{c:"يْ",d:["ي"]},{c:"دَ",d:["ذ"]},{c:"لِ",d:["لَ"]},{c:"يَّ",d:["ي"]},{c:"ةٌ",d:["ت"]}]},
+                {t:"مَطَارٌ",m:"Bandara",s:[{c:"مَ",d:["ن"]},{c:"طَ",d:["ت"]},{c:"ا",d:[]},{c:"رٌ",d:["رٍ"]}]},
+                {t:"مِينَاءٌ",m:"Pelabuhan",s:[{c:"مِ",d:["مَ"]},{c:"ي",d:[]},{c:"نَ",d:["م"]},{c:"ا",d:[]},{c:"ءٌ",d:["ء"]}]},
+                {t:"جَامِعَةٌ",m:"Universitas",s:[{c:"جَ",d:["ح"]},{c:"ا",d:[]},{c:"مِ",d:["مَ"]},{c:"عَ",d:["غ"]},{c:"ةٌ",d:["ت"]}]},
+                {t:"مُتْحَفٌ",m:"Museum",s:[{c:"مُ",d:["مَ"]},{c:"تْ",d:["ط"]},{c:"حَ",d:["خ"]},{c:"فٌ",d:["فٍ"]}]},
+                {t:"مَطْعَمٌ",m:"Restoran",s:[{c:"مَ",d:["ن"]},{c:"طْ",d:["ت"]},{c:"عَ",d:["غ"]},{c:"مٌ",d:["ن"]}]},
+                {t:"فُنْدُقٌ",m:"Hotel",s:[{c:"فُ",d:["فَ"]},{c:"نْ",d:["م"]},{c:"دُ",d:["ذ"]},{c:"قٌ",d:["ك"]}]}
+            ],
+            "PROFESI (LK)": [
+                {t:"مُدِيرٌ",m:"Kepala sekolah",s:[{c:"مُ",d:["مَ"]},{c:"دِ",d:["ذ"]},{c:"ي",d:[]},{c:"رٌ",d:["رٍ"]}]},
+                {t:"أَسْتَاذٌ",m:"Ustaz",s:[{c:"أَ",d:["ا"]},{c:"سْ",d:["ص"]},{c:"تَ",d:["ط"]},{c:"ا",d:[]},{c:"ذٌ",d:["ز"]}]},
+                {t:"مُدَرِّسٌ",m:"Guru",s:[{c:"مُ",d:["مَ"]},{c:"دَ",d:["ذ"]},{c:"رِّ",d:["رِ"]},{c:"سٌ",d:["ص"]}]},
+                {t:"طَبِيبٌ",m:"Dokter",s:[{c:"طَ",d:["ت"]},{c:"بِ",d:["بَ"]},{c:"ي",d:[]},{c:"بٌ",d:["بٍ"]}]},
+                {t:"فَلَّاحٌ",m:"Petani",s:[{c:"فَ",d:["ق"]},{c:"لَّ",d:["لَ"]},{c:"ا",d:[]},{c:"حٌ",d:["خ"]}]},
+                {t:"تَاجِرٌ",m:"Pedagang",s:[{c:"تَ",d:["ط"]},{c:"ا",d:[]},{c:"جِ",d:["ح"]},{c:"رٌ",d:["رٍ"]}]},
+                {t:"طَالِبٌ",m:"Pelajar",s:[{c:"طَ",d:["ت"]},{c:"ا",d:[]},{c:"لِ",d:["لَ"]},{c:"بٌ",d:["بٍ"]}]},
+                {t:"شُرْطِيٌّ",m:"Polisi",s:[{c:"شُ",d:["س"]},{c:"رْ",d:["رَ"]},{c:"طِ",d:["ت"]},{c:"يٌّ",d:["ي"]}]},
+                {t:"مُدَرِّبٌ",m:"Pelatih",s:[{c:"مُ",d:["مَ"]},{c:"دَ",d:["ذ"]},{c:"رِّ",d:["رِ"]},{c:"بٌ",d:["بٍ"]}]},
+                {t:"مَوَظَّفٌ",m:"Pegawai",s:[{c:"مَ",d:["ن"]},{c:"وَ",d:["و"]},{c:"ظَّ",d:["ض"]},{c:"فٌ",d:["فٍ"]}]}
+            ],
+            "PROFESI (PR)": [
+                {t:"مُدِيرَةٌ",m:"Kepala sekolah (Pr)",s:[{c:"مُ",d:["مَ"]},{c:"دِ",d:["ذ"]},{c:"ي",d:[]},{c:"رَ",d:["رِ"]},{c:"ةٌ",d:["ت"]}]},
+                {t:"أُسْتَاذَةٌ",m:"Ustazah",s:[{c:"أُ",d:["ا"]},{c:"سْ",d:["ص"]},{c:"تَ",d:["ط"]},{c:"ا",d:[]},{c:"ذَ",d:["ز"]},{c:"ةٌ",d:["ت"]}]},
+                {t:"مُدَرِّسَةٌ",m:"Guru (Pr)",s:[{c:"مُ",d:["مَ"]},{c:"دَ",d:["ذ"]},{c:"رِّ",d:["رِ"]},{c:"سَ",d:["ص"]},{c:"ةٌ",d:["ت"]}]},
+                {t:"طَبِيبَةٌ",m:"Dokter (Pr)",s:[{c:"طَ",d:["ت"]},{c:"بِ",d:["بَ"]},{c:"ي",d:[]},{c:"بَ",d:["بِ"]},{c:"ةٌ",d:["ت"]}]},
+                {t:"فَلَّاحَةٌ",m:"Petani (Pr)",s:[{c:"فَ",d:["ق"]},{c:"لَّ",d:["لَ"]},{c:"ا",d:[]},{c:"حَ",d:["خ"]},{c:"ةٌ",d:["ت"]}]},
+                {t:"تَاجِرَةٌ",m:"Pedagang (Pr)",s:[{c:"تَ",d:["ط"]},{c:"ا",d:[]},{c:"جِ",d:["ح"]},{c:"رَ",d:["رِ"]},{c:"ةٌ",d:["ت"]}]},
+                {t:"طَالِبَةٌ",m:"Pelajar (Pr)",s:[{c:"طَ",d:["ت"]},{c:"ا",d:[]},{c:"لِ",d:["لَ"]},{c:"بَ",d:["بِ"]},{c:"ةٌ",d:["ت"]}]},
+                {t:"شُرْطِيَّةٌ",m:"Polisi (Pr)",s:[{c:"شُ",d:["س"]},{c:"رْ",d:["رَ"]},{c:"طِ",d:["ت"]},{c:"يَّ",d:["ي"]},{c:"ةٌ",d:["ت"]}]},
+                {t:"مُدَرِّبَةٌ",m:"Pelatih (Pr)",s:[{c:"مُ",d:["مَ"]},{c:"دَ",d:["ذ"]},{c:"رِّ",d:["رِ"]},{c:"بَ",d:["بِ"]},{c:"ةٌ",d:["ت"]}]},
+                {t:"مُوَظَّفَةٌ",m:"Pegawai (Pr)",s:[{c:"مُ",d:["مَ"]},{c:"وَ",d:["و"]},{c:"ظَّ",d:["ض"]},{c:"فَ",d:["فِ"]},{c:"ةٌ",d:["ت"]}]}
+            ],
+            "KELUARGA": [
+                {t:"أَبٌ",m:"Bapak",s:[{c:"أَ",d:["ا"]},{c:"بٌ",d:["بٍ"]}]},
+                {t:"أُمٌّ",m:"Ibu",s:[{c:"أُ",d:["ا"]},{c:"مٌّ",d:["م"]}]},
+                {t:"وَلَدٌ",m:"Anak laki-laki",s:[{c:"وَ",d:["و"]},{c:"لَ",d:["لِ"]},{c:"دٌ",d:["ذ"]}]},
+                {t:"بِنْتٌ",m:"Anak Perempuan",s:[{c:"بِ",d:["بَ"]},{c:"نْ",d:["م"]},{c:"تٌ",d:["ط"]}]},
+                {t:"جَدٌّ",m:"Kakek",s:[{c:"جَ",d:["ح"]},{c:"دٌّ",d:["د"]}]},
+                {t:"جَدَّةٌ",m:"Nenek",s:[{c:"جَ",d:["ح"]},{c:"دَّ",d:["د"]},{c:"ةٌ",d:["ت"]}]},
+                {t:"رَجُلٌ",m:"Laki-laki",s:[{c:"رَ",d:["ز"]},{c:"جُ",d:["ح"]},{c:"لٌ",d:["لٍ"]}]},
+                {t:"مَرْأَةٌ",m:"Perempuan",s:[{c:"مَ",d:["ن"]},{c:"رْ",d:["رَ"]},{c:"أَ",d:["ء"]},{c:"ةٌ",d:["ت"]}]},
+                {t:"فَتًى",m:"Pemuda",s:[{c:"فَ",d:["ق"]},{c:"تً",d:["ط"]},{c:"ى",d:[]}]},
+                {t:"فَتَاةٌ",m:"Pemudi",s:[{c:"فَ",d:["ق"]},{c:"تَ",d:["ط"]},{c:"ا",d:[]},{c:"ةٌ",d:["ت"]}]}
+            ],
+            "MAKANAN": [
+                {t:"قَهْوَةٌ",m:"Kopi",s:[{c:"قَ",d:["ك"]},{c:"هْ",d:["ح"]},{c:"وَ",d:["و"]},{c:"ةٌ",d:["ت"]}]},
+                {t:"شَايٌ",m:"Teh",s:[{c:"شَ",d:["س"]},{c:"ا",d:[]},{c:"يٌ",d:["ي"]}]},
+                {t:"لَبَنٌ",m:"Susu",s:[{c:"لَ",d:["لِ"]},{c:"بَ",d:["بِ"]},{c:"نٌ",d:["نٍ"]}]},
+                {t:"مَاءٌ",m:"Air",s:[{c:"مَ",d:["ن"]},{c:"ا",d:[]},{c:"ءٌ",d:["ء"]}]},
+                {t:"لَحْمٌ",m:"Daging",s:[{c:"لَ",d:["لِ"]},{c:"حْ",d:["خ"]},{c:"مٌ",d:["ن"]}]},
+                {t:"بَيْضَةٌ",m:"Telur",s:[{c:"بَ",d:["ت"]},{c:"يْ",d:["ي"]},{c:"ضَ",d:["ظ"]},{c:"ةٌ",d:["ت"]}]},
+                {t:"خُبْزٌ",m:"Roti",s:[{c:"خُ",d:["ح"]},{c:"بْ",d:["بَ"]},{c:"زٌ",d:["ذ"]}]},
+                {t:"جُبْنٌ",m:"Keju",s:[{c:"جُ",d:["ح"]},{c:"بْ",d:["بَ"]},{c:"نٌ",d:["نٍ"]}]},
+                {t:"رُزٌّ",m:"Nasi",s:[{c:"رُ",d:["ز"]},{c:"زٌّ",d:["ز"]}]},
+                {t:"ذُرَةٌ",m:"Jagung",s:[{c:"ذُ",d:["ز"]},{c:"رَ",d:["رِ"]},{c:"ةٌ",d:["ت"]}]}
+            ],
+            "BUAH": [
+                {t:"تَمْرٌ",m:"Kurma",s:[{c:"تَ",d:["ط"]},{c:"مْ",d:["ن"]},{c:"رٌ",d:["رٍ"]}]},
+                {t:"مَوْزٌ",m:"Pisang",s:[{c:"مَ",d:["ن"]},{c:"وْ",d:["و"]},{c:"زٌ",d:["ذ"]}]},
+                {t:"بَابَايَا",m:"Pepaya",s:[{c:"بَ",d:["ت"]},{c:"ا",d:[]},{c:"بَ",d:["ت"]},{c:"ا",d:[]},{c:"يَ",d:["ي"]},{c:"ا",d:[]}]},
+                {t:"تُفَّاحٌ",m:"Apel",s:[{c:"تُ",d:["ط"]},{c:"فَّ",d:["فَ"]},{c:"ا",d:[]},{c:"حٌ",d:["خ"]}]},
+                {t:"بُرْتُقَالٌ",m:"Jeruk",s:[{c:"بُ",d:["بَ"]},{c:"رْ",d:["رَ"]},{c:"تُ",d:["ط"]},{c:"قَ",d:["ك"]},{c:"ا",d:[]},{c:"لٌ",d:["لٍ"]}]},
+                {t:"بِطِّيخٌ",m:"Semangka",s:[{c:"بِ",d:["بَ"]},{c:"طِّ",d:["ت"]},{c:"ي",d:[]},{c:"خٌ",d:["ح"]}]},
+                {t:"عِنَبٌ",m:"Anggur",s:[{c:"عِ",d:["غ"]},{c:"نَ",d:["م"]},{c:"بٌ",d:["بٍ"]}]},
+                {t:"لَيْمُونٌ",m:"Lemon",s:[{c:"لَ",d:["لِ"]},{c:"يْ",d:["ي"]},{c:"مُ",d:["مَ"]},{c:"و",d:[]},{c:"نٌ",d:["نٍ"]}]},
+                {t:"جَوَّافَةٌ",m:"Jambu",s:[{c:"جَ",d:["ح"]},{c:"وَّ",d:["و"]},{c:"ا",d:[]},{c:"فَ",d:["فِ"]},{c:"ةٌ",d:["ت"]}]},
+                {t:"رُمَّانٌ",m:"Delima",s:[{c:"رُ",d:["ز"]},{c:"مَّ",d:["مَ"]},{c:"ا",d:[]},{c:"نٌ",d:["نٍ"]}]}
+            ],
+            "DAPUR": [
+                {t:"صَحْنٌ",m:"Piring",s:[{c:"صَ",d:["س"]},{c:"حْ",d:["خ"]},{c:"نٌ",d:["نٍ"]}]},
+                {t:"كُوبٌ",m:"Gelas",s:[{c:"كُ",d:["ق"]},{c:"و",d:[]},{c:"بٌ",d:["بٍ"]}]},
+                {t:"مِلْعَقَةٌ",m:"Sendok",s:[{c:"مِ",d:["مَ"]},{c:"لْ",d:["لَ"]},{c:"عَ",d:["غ"]},{c:"قَ",d:["ك"]},{c:"ةٌ",d:["ت"]}]},
+                {t:"شَوْكَةٌ",m:"Garpu",s:[{c:"شَ",d:["س"]},{c:"وْ",d:["و"]},{c:"كَ",d:["ق"]},{c:"ةٌ",d:["ت"]}]},
+                {t:"سِكِّينٌ",m:"Pisau",s:[{c:"سِ",d:["ص"]},{c:"كِّ",d:["ك"]},{c:"ي",d:[]},{c:"نٌ",d:["نٍ"]}]},
+                {t:"فِنْجَانٌ",m:"Cangkir",s:[{c:"فِ",d:["فَ"]},{c:"نْ",d:["م"]},{c:"جَ",d:["ح"]},{c:"ا",d:[]},{c:"نٌ",d:["نٍ"]}]},
+                {t:"قِدْرٌ",m:"Panci",s:[{c:"قِ",d:["ك"]},{c:"دْ",d:["ذ"]},{c:"رٌ",d:["رٍ"]}]},
+                {t:"مِقْلَاةٌ",m:"Wajan",s:[{c:"مِ",d:["مَ"]},{c:"قْ",d:["ك"]},{c:"لَ",d:["لِ"]},{c:"ا",d:[]},{c:"ةٌ",d:["ت"]}]},
+                {t:"مِخْبَصَةٌ",m:"Sudip",s:[{c:"مِ",d:["مَ"]},{c:"خْ",d:["ح"]},{c:"بَ",d:["بِ"]},{c:"صَ",d:["س"]},{c:"ةٌ",d:["ت"]}]},
+                {t:"مَوْقِدٌ",m:"Kompor",s:[{c:"مَ",d:["ن"]},{c:"وْ",d:["و"]},{c:"قِ",d:["ك"]},{c:"دٌ",d:["ذ"]}]}
+            ],
+            "HEWAN": [
+                {t:"أَسَدٌ",m:"Singa",s:[{c:"أَ",d:["ا"]},{c:"سَ",d:["ص"]},{c:"دٌ",d:["ذ"]}]},
+                {t:"فِيلٌ",m:"Gajah",s:[{c:"فِ",d:["فَ"]},{c:"ي",d:[]},{c:"لٌ",d:["لٍ"]}]},
+                {t:"نَمْلٌ",m:"Semut",s:[{c:"نَ",d:["م"]},{c:"مْ",d:["ن"]},{c:"لٌ",d:["لٍ"]}]},
+                {t:"دِيكٌ",m:"Ayam jantan",s:[{c:"دِ",d:["ذ"]},{c:"ي",d:[]},{c:"كٌ",d:["ق"]}]},
+                {t:"حِصَانٌ",m:"Kuda",s:[{c:"حِ",d:["خ"]},{c:"صَ",d:["س"]},{c:"ا",d:[]},{c:"نٌ",d:["نٍ"]}]},
+                {t:"حِمَارٌ",m:"Keledai",s:[{c:"حِ",d:["خ"]},{c:"مَ",d:["مِ"]},{c:"ا",d:[]},{c:"رٌ",d:["رٍ"]}]},
+                {t:"جَمَلٌ",m:"Unta",s:[{c:"جَ",d:["ح"]},{c:"مَ",d:["مِ"]},{c:"لٌ",d:["لٍ"]}]},
+                {t:"قِطٌّ",m:"Kucing",s:[{c:"قِ",d:["ك"]},{c:"طٌّ",d:["ط"]}]},
+                {t:"كَلْبٌ",m:"Anjing",s:[{c:"كَ",d:["ق"]},{c:"لْ",d:["لَ"]},{c:"بٌ",d:["بٍ"]}]},
+                {t:"سَمَكٌ",m:"Ikan",s:[{c:"سَ",d:["ص"]},{c:"مَ",d:["مِ"]},{c:"كٌ",d:["ق"]}]}
+            ],
+            "KATA SIFAT 1": [
+                {t:"جَمِيلٌ",m:"Bagus",s:[{c:"جَ",d:["ح"]},{c:"مِ",d:["مَ"]},{c:"ي",d:[]},{c:"لٌ",d:["لٍ"]}]},
+                {t:"قَبِيحٌ",m:"Buruk",s:[{c:"قَ",d:["ك"]},{c:"بِ",d:["بَ"]},{c:"ي",d:[]},{c:"حٌ",d:["خ"]}]},
+                {t:"وَاسِعٌ",m:"Luas",s:[{c:"وَ",d:["و"]},{c:"ا",d:[]},{c:"سِ",d:["ص"]},{c:"عٌ",d:["ع"]}]},
+                {t:"ضَيِّقٌ",m:"Sempit",s:[{c:"ضَ",d:["ظ"]},{c:"يِّ",d:["ي"]},{c:"قٌ",d:["ك"]}]},
+                {t:"نَظِيفٌ",m:"Bersih",s:[{c:"نَ",d:["م"]},{c:"ظِ",d:["ز"]},{c:"ي",d:[]},{c:"فٌ",d:["فٍ"]}]},
+                {t:"وَسِخٌ",m:"Kotor",s:[{c:"وَ",d:["و"]},{c:"سِ",d:["ش"]},{c:"خٌ",d:["ح"]}]},
+                {t:"جَدِيدٌ",m:"Baru",s:[{c:"جَ",d:["ح"]},{c:"دِ",d:["ذ"]},{c:"ي",d:[]},{c:"دٌ",d:["ذ"]}]},
+                {t:"قَدِيمٌ",m:"Lama",s:[{c:"قَ",d:["ك"]},{c:"دِ",d:["ذ"]},{c:"ي",d:[]},{c:"مٌ",d:["ن"]}]},
+                {t:"بَعِيدٌ",m:"Jauh",s:[{c:"بَ",d:["بِ"]},{c:"عِ",d:["غ"]},{c:"ي",d:[]},{c:"دٌ",d:["ذ"]}]},
+                {t:"قَرِيبٌ",m:"Dekat",s:[{c:"قَ",d:["ك"]},{c:"رِ",d:["رَ"]},{c:"ي",d:[]},{c:"بٌ",d:["بٍ"]}]}
+            ],
+            "KATA SIFAT 2": [
+                {t:"غَنِيٌّ",m:"Kaya",s:[{c:"غَ",d:["ع"]},{c:"نِ",d:["م"]},{c:"يٌّ",d:["ي"]}]},
+                {t:"فَقِيرٌ",m:"Miskin",s:[{c:"فَ",d:["ق"]},{c:"قِ",d:["ك"]},{c:"ي",d:[]},{c:"رٌ",d:["رٍ"]}]},
+                {t:"قَوِيٌّ",m:"Kuat",s:[{c:"قَ",d:["ك"]},{c:"وِ",d:["و"]},{c:"يٌّ",d:["ي"]}]},
+                {t:"ضَعِيفٌ",m:"Lemah",s:[{c:"ضَ",d:["ظ"]},{c:"عِ",d:["غ"]},{c:"ي",d:[]},{c:"فٌ",d:["فٍ"]}]},
+                {t:"سَمِينٌ",m:"Gemuk",s:[{c:"سَ",d:["ص"]},{c:"مِ",d:["مَ"]},{c:"ي",d:[]},{c:"نٌ",d:["نٍ"]}]},
+                {t:"نَحِيفٌ",m:"Kurus",s:[{c:"نَ",d:["م"]},{c:"حِ",d:["خ"]},{c:"ي",d:[]},{c:"فٌ",d:["فٍ"]}]},
+                {t:"مُجْتَهِدٌ",m:"Rajin",s:[{c:"مُ",d:["مَ"]},{c:"جْ",d:["ح"]},{c:"تَ",d:["ط"]},{c:"هِ",d:["هَ"]},{c:"دٌ",d:["ذ"]}]},
+                {t:"كَسْلَانُ",m:"Malas",s:[{c:"كَ",d:["ق"]},{c:"سْ",d:["ص"]},{c:"لَ",d:["لِ"]},{c:"ا",d:[]},{c:"نُ",d:["ن"]}]},
+                {t:"مَسْرُورٌ",m:"Senang",s:[{c:"مَ",d:["ن"]},{c:"سْ",d:["ش"]},{c:"رُ",d:["رِ"]},{c:"و",d:[]},{c:"رٌ",d:["رٍ"]}]},
+                {t:"حَزِينٌ",m:"Sedih",s:[{c:"حَ",d:["خ"]},{c:"زِ",d:["ذ"]},{c:"ي",d:[]},{c:"نٌ",d:["نٍ"]}]}
+            ],
+            "KATA SIFAT 3": [
+                {t:"مُبْتَلٌّ",m:"Basah",s:[{c:"مُ",d:["مَ"]},{c:"بْ",d:["بَ"]},{c:"تَ",d:["ط"]},{c:"لٌّ",d:["ل"]}]},
+                {t:"جَافٌّ",m:"Kering",s:[{c:"جَ",d:["ح"]},{c:"ا",d:[]},{c:"فٌّ",d:["ف"]}]},
+                {t:"مَفْتَوحٌ",m:"Terbuka",s:[{c:"مَ",d:["ن"]},{c:"فْ",d:["ق"]},{c:"تَ",d:["ط"]},{c:"و",d:[]},{c:"حٌ",d:["خ"]}]},
+                {t:"مُغْلَقٌ",m:"Tertutup",s:[{c:"مُ",d:["مَ"]},{c:"غْ",d:["ع"]},{c:"لَ",d:["لِ"]},{c:"قٌ",d:["ك"]}]},
+                {t:"ثَقِيلٌ",m:"Berat",s:[{c:"ثَ",d:["ش"]},{c:"قِ",d:["ك"]},{c:"ي",d:[]},{c:"لٌ",d:["لٍ"]}]},
+                {t:"خَفِيفٌ",m:"Ringan",s:[{c:"خَ",d:["ح"]},{c:"فِ",d:["فَ"]},{c:"ي",d:[]},{c:"فٌ",d:["فٍ"]}]},
+                {t:"سَهْلٌ",m:"Mudah",s:[{c:"سَ",d:["ص"]},{c:"هْ",d:["ح"]},{c:"لٌ",d:["لٍ"]}]},
+                {t:"صَعْبٌ",m:"Sulit",s:[{c:"صَ",d:["س"]},{c:"عْ",d:["غ"]},{c:"بٌ",d:["بٍ"]}]},
+                {t:"حُلْوٌ",m:"Manis",s:[{c:"حُ",d:["خ"]},{c:"لْ",d:["لَ"]},{c:"وٌ",d:["و"]}]},
+                {t:"مُرٌّ",m:"Pahit",s:[{c:"مُ",d:["مَ"]},{c:"رٌّ",d:["ر"]}]}
+            ],
+            "KATA SIFAT 4": [
+                {t:"كَرِيمٌ",m:"Dermawan",s:[{c:"كَ",d:["ق"]},{c:"رِ",d:["رَ"]},{c:"ي",d:[]},{c:"مٌ",d:["ن"]}]},
+                {t:"بَخِيلٌ",m:"Pelit",s:[{c:"بَ",d:["ت"]},{c:"خِ",d:["ح"]},{c:"ي",d:[]},{c:"لٌ",d:["لٍ"]}]},
+                {t:"شُجَاعٌ",m:"Pemberani",s:[{c:"شُ",d:["س"]},{c:"جَ",d:["ح"]},{c:"ا",d:[]},{c:"عٌ",d:["ع"]}]},
+                {t:"خَائِفٌ",m:"Penakut",s:[{c:"خَ",d:["ح"]},{c:"ا",d:[]},{c:"ئِ",d:["ئ"]},{c:"فٌ",d:["فٍ"]}]},
+                {t:"مُتَوَاضِعٌ",m:"Rendah hati",s:[{c:"مُ",d:["مَ"]},{c:"تَ",d:["ط"]},{c:"وَ",d:["و"]},{c:"ا",d:[]},{c:"ضِ",d:["ظ"]},{c:"عٌ",d:["غ"]}]},
+                {t:"مُتَكَبِّرٌ",m:"Sombong",s:[{c:"مُ",d:["مَ"]},{c:"تَ",d:["ط"]},{c:"كَ",d:["ق"]},{c:"بِّ",d:["ب"]},{c:"رٌ",d:["رٍ"]}]},
+                {t:"صَحِيحٌ",m:"Sehat",s:[{c:"صَ",d:["س"]},{c:"حِ",d:["خ"]},{c:"ي",d:[]},{c:"حٌ",d:["خ"]}]},
+                {t:"مَرِيضٌ",m:"Sakit",s:[{c:"مَ",d:["ن"]},{c:"رِ",d:["رَ"]},{c:"ي",d:[]},{c:"ضٌ",d:["ظ"]}]},
+                {t:"أَمِينٌ",m:"Jujur",s:[{c:"أَ",d:["ا"]},{c:"مِ",d:["مَ"]},{c:"ي",d:[]},{c:"نٌ",d:["نٍ"]}]},
+                {t:"كَاذِبٌ",m:"Bohong",s:[{c:"كَ",d:["ق"]},{c:"ا",d:[]},{c:"ذِ",d:["ز"]},{c:"بٌ",d:["بٍ"]}]}
+            ],
+            "WARNA": [
+                {t:"أَسْوَدُ",m:"Hitam",s:[{c:"أَ",d:["ا"]},{c:"سْ",d:["ص"]},{c:"وَ",d:["و"]},{c:"دُ",d:["ذ"]}]},
+                {t:"أَبْيَضُ",m:"Putih",s:[{c:"أَ",d:["ا"]},{c:"بْ",d:["ت"]},{c:"يَ",d:["ي"]},{c:"ضُ",d:["د"]}]},
+                {t:"أَحْمَرُ",m:"Merah",s:[{c:"أَ",d:["ا"]},{c:"حْ",d:["خ"]},{c:"مَ",d:["ن"]},{c:"رُ",d:["رٍ"]}]},
+                {t:"أَصْفَرُ",m:"Kuning",s:[{c:"أَ",d:["ا"]},{c:"صْ",d:["س"]},{c:"فَ",d:["فِ"]},{c:"رُ",d:["رٍ"]}]},
+                {t:"أَخْضَرُ",m:"Hijau",s:[{c:"أَ",d:["ا"]},{c:"خْ",d:["ح"]},{c:"ضَ",d:["ظ"]},{c:"رُ",d:["رٍ"]}]},
+                {t:"أَزْرَقُ",m:"Biru",s:[{c:"أَ",d:["ا"]},{c:"زْ",d:["ذ"]},{c:"رَ",d:["رِ"]},{c:"قُ",d:["ك"]}]},
+                {t:"أَسْمَرُ",m:"Coklat",s:[{c:"أَ",d:["ا"]},{c:"سْ",d:["ش"]},{c:"مَ",d:["ن"]},{c:"رُ",d:["رٍ"]}]},
+                {t:"أَرْمَدُ",m:"Abu-abu",s:[{c:"أَ",d:["ا"]},{c:"رْ",d:["رَ"]},{c:"مَ",d:["ن"]},{c:"دُ",d:["ذ"]}]},
+                {t:"قَرَنْفُلِيٌّ",m:"Pink",s:[{c:"قَ",d:["ك"]},{c:"رَ",d:["رِ"]},{c:"نْ",d:["م"]},{c:"فُ",d:["فَ"]},{c:"لِ",d:["لَ"]},{c:"يٌّ",d:["ي"]}]},
+                {t:"بَنَفْسَجِيٌّ",m:"Ungu",s:[{c:"بَ",d:["ت"]},{c:"نَ",d:["م"]},{c:"فْ",d:["فَ"]},{c:"سَ",d:["ش"]},{c:"جِ",d:["ح"]},{c:"يٌّ",d:["ي"]}]}
+            ]
+        };
+
+        const extraChars = "ابتثجحخدذرزسشصضطظعغفقكلمنهوي";
+
+        let state = {
+            numPlayers: 1,
+            playlist: [],
+            activeThemeName: "",
+            timeLimit: 60,
+            currentTime: 60,
+            timerInterval: null,
+            players: [ 
+                { name: "", score: 0, idx: 0, level: 1 }, 
+                { name: "", score: 0, idx: 0, level: 1 } 
+            ]
+        };
+
+        // --- INIT ---
+        window.onload = function() { renderThemes(); };
+
+        function enterHome() {
+            document.getElementById('screen-splash').classList.add('hidden');
+            document.getElementById('screen-home').classList.remove('hidden');
+        }
+
+        function showScreen(id) {
+            const screens = ['screen-splash', 'screen-home', 'screen-input', 'screen-theme', 'screen-result'];
+            screens.forEach(sid => { const el = document.getElementById(sid); if(el) el.classList.add('hidden'); });
+            document.getElementById('game-ui').classList.add('hidden');
+            document.getElementById('game-container').classList.add('hidden');
+            const target = document.getElementById(id);
+            if(target) target.classList.remove('hidden');
+        }
+
+        function goToInput(n) {
+            state.numPlayers = n;
+            const c = document.getElementById('input-container');
+            c.innerHTML = '';
+            for(let i=0; i<n; i++) {
+                c.innerHTML += `<div class="w-full"><label class="block mb-2 text-emerald-200 font-bold">${n===1?'Nama Pemain':(i===0?'Pemain Kanan (1)':'Pemain Kiri (2)')}</label><input type="text" id="inp-p${i}" class="w-full px-5 py-4 rounded-xl text-slate-900 text-center font-bold text-xl outline-none focus:ring-4 focus:ring-yellow-400 shadow-lg" placeholder="Ketik nama..." autocomplete="off"></div>`;
+            }
+            showScreen('screen-input');
+        }
+
+        function validateToTheme() {
+            let valid = true;
+            for(let i=0; i<state.numPlayers; i++) {
+                const el = document.getElementById(`inp-p${i}`);
+                if(!el.value.trim()) { el.classList.add('bg-red-400'); valid=false; }
+                else { el.classList.remove('bg-red-400'); state.players[i].name = el.value.trim(); }
+            }
+            if(valid) { showScreen('screen-theme'); }
+        }
+
+        function renderThemes() {
+            const c = document.getElementById('theme-container');
+            c.innerHTML = '';
+            c.innerHTML += `
+                <button onclick="selectTheme('ALL')" class="bg-gradient-to-br from-purple-500 to-indigo-600 hover:scale-105 transform transition-all p-4 rounded-2xl shadow-lg flex flex-col items-center justify-center text-white border-b-4 border-indigo-800 active:border-b-0 active:translate-y-1 h-32">
+                    <span class="text-3xl mb-2">🎲</span>
+                    <span class="font-bold text-lg leading-none">CAMPURAN</span>
+                    <span class="text-xs text-purple-200 mt-1">Semua Topik</span>
+                </button>
+            `;
+            Object.keys(themesDB).forEach(key => {
+                let icon = "📚";
+                if(key.includes("PRIBADI") || key.includes("PAKAIAN")) icon = "👕";
+                if(key.includes("RUMAH")) icon = "🏠";
+                if(key.includes("HEWAN")) icon = "🦁";
+                if(key.includes("BUAH") || key.includes("MAKANAN")) icon = "🍎";
+                if(key.includes("DAPUR")) icon = "🍳";
+                if(key.includes("PROFESI")) icon = "👨‍⚕️";
+                if(key.includes("KELUARGA")) icon = "👨‍👩‍👧";
+                if(key.includes("SIFAT")) icon = "✨";
+                if(key.includes("WARNA")) icon = "🎨";
+                if(key.includes("TEMPAT")) icon = "🕌";
+
+                c.innerHTML += `
+                    <button onclick="selectTheme('${key}')" class="bg-white hover:bg-emerald-50 hover:scale-105 transform transition-all p-4 rounded-2xl shadow-lg flex flex-col items-center justify-center text-slate-700 border-b-4 border-slate-300 active:border-b-0 active:translate-y-1 h-32">
+                        <span class="text-3xl mb-2">${icon}</span>
+                        <span class="font-bold text-sm md:text-base leading-tight text-center">${key}</span>
+                    </button>
+                `;
+            });
+        }
+
+        function selectTheme(key) {
+            state.activeThemeName = key === 'ALL' ? "CAMPURAN (SEMUA)" : key;
+            if(key === 'ALL') {
+                let allWords = [];
+                Object.values(themesDB).forEach(arr => allWords = allWords.concat(arr));
+                state.playlist = allWords.sort(() => Math.random() - 0.5);
+            } else {
+                state.playlist = [...themesDB[key]].sort(() => Math.random() - 0.5);
+            }
+            startGame();
+        }
+
+        function startGame() {
+            showScreen('dummy'); 
+            document.getElementById('game-ui').classList.remove('hidden');
+            document.getElementById('game-ui').classList.add('flex');
+            document.getElementById('game-container').classList.remove('hidden');
+            document.getElementById('game-container').classList.add('flex');
+
+            state.currentTime = 60; 
+            state.players.forEach(p => { p.score = 0; p.idx = 0; p.level = 1; });
+
+            document.getElementById('name-p1').innerText = state.players[0].name;
+            document.getElementById('score-p1').innerText = "0";
+            document.getElementById('lvl-p1').innerText = "LV 1";
+            document.getElementById('lvl-p1').className = "bg-emerald-600 text-white text-[10px] px-2 rounded-full";
+
+            if(state.numPlayers === 2) {
+                document.getElementById('ui-p2').classList.remove('hidden');
+                document.getElementById('ui-p2').classList.add('flex');
+                document.getElementById('name-p2').innerText = state.players[1].name;
+                document.getElementById('score-p2').innerText = "0";
+                document.getElementById('lvl-p2').innerText = "LV 1";
+            }
+
+            const container = document.getElementById('game-container');
+            container.innerHTML = `<div class="${state.numPlayers===2?'':'hidden'} absolute left-1/2 top-24 bottom-4 w-1 border-r-2 border-dashed border-slate-300 -translate-x-1/2 z-0"></div>`;
+            
+            for(let i=0; i<state.numPlayers; i++) { createBoard(i); loadWord(i); }
+            startTimer();
+        }
+
+        function startTimer() {
+            const el = document.getElementById('timer-display');
+            el.innerText = state.currentTime;
+            if(state.timerInterval) clearInterval(state.timerInterval);
+            state.timerInterval = setInterval(() => {
+                state.currentTime--;
+                el.innerText = state.currentTime;
+                if(state.currentTime <= 10) el.classList.add('text-red-500'); else el.classList.remove('text-red-500');
+                if(state.currentTime <= 0) { clearInterval(state.timerInterval); finishGame(); }
+            }, 1000);
+        }
+
+        function createBoard(pid) {
+            const div = document.createElement('div');
+            div.className = `flex-1 z-10 glass rounded-3xl shadow-xl border-4 ${pid===0?'border-emerald-500':'border-blue-500'} flex flex-col overflow-hidden relative transition-all`;
+            div.id = `board-${pid}`;
+            div.innerHTML = `
+                <div class="h-[35%] flex flex-row items-center bg-slate-50 border-b-2 border-slate-200">
+                    <div class="w-2/3 h-full flex items-center justify-center relative overflow-visible">
+                        <h2 id="target-${pid}" class="text-7xl md:text-8xl font-bold text-slate-800 drop-shadow-sm select-none leading-[2.0] pt-12 pb-4 px-2">...</h2>
+                    </div>
+                    <div class="w-1/3 h-full flex items-center justify-center border-r-2 border-slate-200 bg-emerald-50/50">
+                        <p id="mean-${pid}" class="text-3xl md:text-5xl font-latin font-bold text-emerald-700 leading-none px-2 text-center drop-shadow-sm">...</p>
+                    </div>
+                </div>
+                <div class="flex-1 bg-slate-100 flex items-center justify-center p-2">
+                    <div id="slots-${pid}" class="flex flex-wrap justify-center gap-2 w-full" dir="rtl"></div>
+                </div>
+                <div class="h-[30%] bg-slate-200 border-t-2 border-slate-300 p-4 overflow-y-auto">
+                    <div id="pool-${pid}" class="flex flex-wrap justify-center gap-3 min-h-full content-start"></div>
+                </div>
+            `;
+            document.getElementById('game-container').appendChild(div);
+        }
+
+        function updateLevel(pid) {
+            const score = state.players[pid].score;
+            let newLevel = 1;
+            if(score >= 150) newLevel = 3; else if(score >= 60) newLevel = 2;
+            if(newLevel > state.players[pid].level) {
+                state.players[pid].level = newLevel;
+                const badge = document.getElementById(`lvl-p${pid===0?1:2}`);
+                badge.innerText = `LV ${newLevel}`;
+                badge.className = `text-[10px] px-2 rounded-full text-white ${newLevel===3?'bg-red-600':(newLevel===2?'bg-yellow-500':'bg-emerald-600')} anim-levelup`;
+                playSound('pop');
+            }
+        }
+
+        function loadWord(pid) {
+            updateLevel(pid);
+            const lvl = state.players[pid].level;
+            const idx = state.players[pid].idx % state.playlist.length;
+            const word = state.playlist[idx];
+            const tEl = document.getElementById(`target-${pid}`);
+            tEl.innerText = word.t;
+            tEl.classList.remove('animate-pop'); void tEl.offsetWidth; tEl.classList.add('animate-pop');
+
+            const mEl = document.getElementById(`mean-${pid}`);
+            if(lvl === 3) { mEl.innerText = "???"; mEl.classList.add("text-slate-300"); } else { mEl.innerText = word.m; mEl.classList.remove("text-slate-300"); }
+            
+            const sCont = document.getElementById(`slots-${pid}`);
+            const pCont = document.getElementById(`pool-${pid}`);
+            sCont.innerHTML = ''; pCont.innerHTML = '';
+
+            let items = [];
+            word.s.forEach((seg, i) => {
+                sCont.innerHTML += `<div class="flex flex-col items-center gap-1"><div id="slot-${pid}-${i}" data-exp="${seg.c}" data-fill="false" class="slot-zone w-16 h-16 md:w-20 md:h-20 bg-white border-2 border-dashed border-slate-400 rounded-xl flex items-center justify-center text-4xl text-slate-300 font-bold shadow-inner"></div><span class="text-xs text-slate-400 font-bold">${(i+1).toLocaleString('ar-EG')}</span></div>`;
+                items.push({c:seg.c});
+                seg.d.forEach(d => items.push({c:d}));
+            });
+
+            let extraCount = 0;
+            if(lvl === 2) extraCount = 1;
+            if(lvl === 3) extraCount = 2;
+            for(let i=0; i<extraCount; i++) {
+                const rndChar = extraChars.charAt(Math.floor(Math.random() * extraChars.length));
+                const harakat = ["َ", "ِ", "ُ", "ٌ", "ٍ"];
+                items.push({c: rndChar + harakat[Math.floor(Math.random()*harakat.length)] });
+            }
+
+            items.sort(() => Math.random() - 0.5);
+            items.forEach((it) => {
+                const el = document.createElement('div');
+                el.className = "draggable cursor-grab active:cursor-grabbing w-14 h-14 md:w-18 md:h-18 bg-white rounded-xl shadow-[0_4px_0_rgba(0,0,0,0.1)] border border-slate-300 flex items-center justify-center text-3xl md:text-4xl font-bold text-slate-700 select-none hover:-translate-y-1 transition-transform touch-none";
+                el.innerText = it.c; pCont.appendChild(el); initDrag(el, pid);
+            });
+        }
+
+        let dragEl=null, placehold=null, startPar=null, offX=0, offY=0;
+        function initDrag(el, pid) {
+            const start = (x, y) => {
+                if(el.dataset.locked) return;
+                dragEl = el; startPar = el.parentNode;
+                const r = el.getBoundingClientRect();
+                offX = x - r.left; offY = y - r.top;
+                placehold = el.cloneNode(true); placehold.style.opacity = '0';
+                startPar.insertBefore(placehold, el);
+                el.style.width = r.width+'px'; el.style.height = r.height+'px';
+                el.classList.add('dragging-active');
+                document.body.appendChild(el);
+                move(x,y);
+            };
+            const move = (x,y) => { if(!dragEl) return; dragEl.style.left=(x-offX)+'px'; dragEl.style.top=(y-offY)+'px'; };
+            const end = (x,y) => {
+                if(!dragEl) return; dragEl.style.display = 'none'; const below = document.elementFromPoint(x,y); dragEl.style.display = 'flex';
+                let ok = false;
+                if(below) {
+                    const slot = below.closest('.slot-zone');
+                    if(slot && slot.id.startsWith(`slot-${pid}`) && slot.dataset.fill === "false") {
+                        if(dragEl.innerText === slot.dataset.exp) { successDrop(slot, dragEl, pid); ok = true; } else failDrop(slot);
+                    }
+                }
+                if(!ok) resetDrag(dragEl); dragEl=null; placehold=null;
+            };
+            el.addEventListener('mousedown', e => { start(e.clientX,e.clientY); const mm=ev=>move(ev.clientX,ev.clientY); const mu=ev=>{document.removeEventListener('mousemove',mm);document.removeEventListener('mouseup',mu);end(ev.clientX,ev.clientY)}; document.addEventListener('mousemove',mm); document.addEventListener('mouseup',mu); });
+            el.addEventListener('touchstart', e => start(e.touches[0].clientX,e.touches[0].clientY), {passive:false});
+            el.addEventListener('touchmove', e => {e.preventDefault();move(e.touches[0].clientX,e.touches[0].clientY)}, {passive:false});
+            el.addEventListener('touchend', e => end(e.changedTouches[0].clientX,e.changedTouches[0].clientY));
+        }
+        function resetDrag(el) { if(placehold && startPar) { el.classList.remove('dragging-active'); el.style.position=''; el.style.left=''; el.style.top=''; el.style.width=''; el.style.height=''; startPar.insertBefore(el, placehold); placehold.remove(); } else el.remove(); }
+        function successDrop(slot, el, pid) {
+            playSound('pop'); if(placehold) placehold.remove();
+            el.classList.remove('dragging-active'); el.style.position='static'; el.style.width='100%'; el.style.height='100%';
+            el.classList.add('bg-emerald-500', 'text-white', 'animate-pop', 'cursor-default');
+            el.classList.remove('bg-white', 'text-slate-700', 'cursor-grab', 'shadow-[0_4px_0_rgba(0,0,0,0.1)]');
+            el.dataset.locked = true; slot.innerHTML = ''; slot.appendChild(el);
+            slot.classList.remove('border-dashed', 'border-slate-400'); slot.classList.add('border-emerald-500', 'border-solid');
+            slot.dataset.fill = "true"; checkWin(pid);
+        }
+        function failDrop(slot) { playSound('err'); slot.classList.add('bg-red-200'); setTimeout(()=>slot.classList.remove('bg-red-200'),300); }
+        
+        function checkWin(pid) {
+            const all = document.querySelectorAll(`#slots-${pid} .slot-zone`);
+            if(Array.from(all).every(s=>s.dataset.fill==="true")) {
+                state.players[pid].score += 10; state.players[pid].idx++;
+                document.getElementById(pid===0?'score-p1':'score-p2').innerText = state.players[pid].score;
+                playSound('win'); document.getElementById(`board-${pid}`).classList.add('flash-anim');
+                setTimeout(()=>document.getElementById(`board-${pid}`).classList.remove('flash-anim'),500);
+                
+                // TIME BONUS
+                const lvl = state.players[pid].level;
+                let bonus = 5;
+                if(lvl === 2) bonus = 3;
+                if(lvl === 3) bonus = 1;
+                state.currentTime += bonus;
+                const tDisplay = document.getElementById('timer-display');
+                tDisplay.innerText = state.currentTime;
+                tDisplay.classList.add('timer-bonus');
+                setTimeout(() => tDisplay.classList.remove('timer-bonus'), 500);
+
+                const idx = (state.players[pid].idx - 1) % state.playlist.length;
+                setTimeout(() => speakArabic(state.playlist[idx].t), 300);
+                if(lvl === 3) { const mEl = document.getElementById(`mean-${pid}`); mEl.innerText = state.playlist[idx].m; mEl.classList.remove("text-slate-300"); }
+                setTimeout(()=>loadWord(pid), 1000);
+            }
+        }
+
+        function finishGame() {
+            showScreen('screen-result'); try { confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } }); } catch(e){}
+            document.getElementById('played-theme-name').innerText = state.activeThemeName;
+            const p1 = state.players[0]; const p2 = state.players[1]; const podium = document.getElementById('podium-area');
+            if(state.numPlayers === 1) {
+                podium.innerHTML = `<div class="flex flex-col items-center animate-pop"><div class="text-6xl mb-2">👑</div><div class="bg-slate-800 p-6 rounded-2xl border-4 border-yellow-400 text-center min-w-[200px]"><div class="text-emerald-400 font-bold text-xl">${p1.name}</div><div class="text-6xl font-bold text-white">${p1.score}</div><div class="text-sm text-slate-400">Poin</div></div></div>`;
+            } else {
+                const p1Win = p1.score >= p2.score; const p2Win = p2.score > p1.score;
+                podium.innerHTML = `<div class="flex flex-col items-center ${p2Win?'scale-110 z-10':''}"><div class="text-4xl mb-1">${p2Win?'👑':''}</div><div class="bg-slate-800 p-4 rounded-2xl border-4 ${p2Win?'border-yellow-400':'border-blue-500'} text-center min-w-[150px]"><div class="text-blue-300 font-bold">${p2.name}</div><div class="text-4xl font-bold text-white">${p2.score}</div></div></div><div class="flex flex-col items-center ${p1Win?'scale-110 z-10':''}"><div class="text-4xl mb-1">${p1Win?'👑':''}</div><div class="bg-slate-800 p-4 rounded-2xl border-4 ${p1Win?'border-yellow-400':'border-emerald-500'} text-center min-w-[150px]"><div class="text-emerald-300 font-bold">${p1.name}</div><div class="text-4xl font-bold text-white">${p1.score}</div></div></div>`;
+            }
+            document.getElementById('result-leaderboard').innerHTML = state.players.slice(0, state.numPlayers).map((p,i) => `<tr class="border-b border-white/10"><td class="py-2 px-2 text-yellow-300 font-bold">#${i+1}</td><td class="py-2 px-2 text-white">${p.name}</td><td class="py-2 px-2 text-right font-bold text-emerald-300">${p.score}</td></tr>`).join('');
+        }
+
+        function openInstructions() { document.getElementById('modal-help').classList.remove('hidden'); }
+        function closeInstructions() { document.getElementById('modal-help').classList.add('hidden'); }
+        function speakArabic(text) { if ('speechSynthesis' in window) { const u = new SpeechSynthesisUtterance(text); u.lang = 'ar-SA'; u.rate = 0.9; window.speechSynthesis.speak(u); } }
+        function confirmHome() { if(confirm("Kembali ke menu utama?")) location.reload(); }
+        const actx = new (window.AudioContext||window.webkitAudioContext)();
+        function playSound(t) { if(actx.state==='suspended') actx.resume(); const o=actx.createOscillator(), g=actx.createGain(); o.connect(g); g.connect(actx.destination); const now=actx.currentTime; if(t==='pop'){ o.frequency.setValueAtTime(600,now); o.frequency.exponentialRampToValueAtTime(1000,now+0.1); g.gain.setValueAtTime(0.05,now); g.gain.exponentialRampToValueAtTime(0.001,now+0.1); o.start(now); o.stop(now+0.1); } else if(t==='err'){ o.type='sawtooth'; o.frequency.setValueAtTime(150,now); g.gain.setValueAtTime(0.05,now); g.gain.linearRampToValueAtTime(0,now+0.2); o.start(now); o.stop(now+0.2); } else if(t==='win'){ o.type='triangle'; o.frequency.setValueAtTime(523,now); o.frequency.setValueAtTime(784,now+0.1); g.gain.setValueAtTime(0.05,now); g.gain.linearRampToValueAtTime(0,now+0.4); o.start(now); o.stop(now+0.4); } }
+    </script>
+</body>
+</html>
