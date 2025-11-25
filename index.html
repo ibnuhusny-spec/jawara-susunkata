@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
     
     <style>
-        /* FIX 1: Menggunakan 100dvh untuk tinggi layar yang akurat di IFP/Mobile */
+        /* Fix 100dvh untuk IFP fullscreen */
         body { 
             font-family: 'Amiri', serif; 
             touch-action: none; 
@@ -22,8 +22,12 @@
         .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(5px); }
         
         .dragging-active { 
-            position: fixed !important; z-index: 9999 !important; pointer-events: none; 
-            transform: scale(1.2); box-shadow: 0 25px 30px -5px rgba(0, 0, 0, 0.4);
+            position: fixed !important; 
+            z-index: 9999 !important; 
+            pointer-events: none; /* Penting agar elementFromPoint tembus ke bawah */
+            transform: scale(1.2); 
+            box-shadow: 0 25px 30px -5px rgba(0, 0, 0, 0.4);
+            opacity: 0.9;
         }
 
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
@@ -64,7 +68,7 @@
             <button onclick="goToInput(1)" class="bg-white text-emerald-800 w-48 py-6 rounded-3xl shadow-xl hover:bg-yellow-300 hover:scale-105 transition-all flex flex-col items-center gap-2 border-b-8 border-emerald-900 active:border-b-0 active:translate-y-2"><span class="text-5xl">👤</span><span class="text-xl font-bold">1 Pemain</span></button>
             <button onclick="goToInput(2)" class="bg-white text-emerald-800 w-48 py-6 rounded-3xl shadow-xl hover:bg-yellow-300 hover:scale-105 transition-all flex flex-col items-center gap-2 border-b-8 border-emerald-900 active:border-b-0 active:translate-y-2"><span class="text-5xl">👥</span><span class="text-xl font-bold">2 Pemain</span></button>
         </div>
-        <div class="bg-black/40 p-4 rounded-xl text-center text-slate-300 text-sm">Tips: Waktu akan bertambah jika jawaban benar!</div>
+        <div class="bg-black/40 p-4 rounded-xl text-center text-slate-300 text-sm">Mode Multi-Touch Aktif: Bisa main bersamaan!</div>
     </div>
 
     <div id="screen-input" class="hidden absolute inset-0 z-50 bg-emerald-900 flex flex-col items-center justify-center text-white font-latin px-4" dir="ltr">
@@ -80,7 +84,8 @@
         <div class="w-full max-w-5xl flex flex-col h-full py-8">
             <h2 class="text-4xl font-bold mb-2 text-yellow-300 text-center shrink-0">Pilih Sesi / Tema</h2>
             <p class="text-slate-400 mb-6 text-center shrink-0">Silakan pilih kategori hafalan</p>
-            <div class="flex-1 overflow-y-auto pr-2 pb-28"> <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 w-full" id="theme-container"></div>
+            <div class="flex-1 overflow-y-auto pr-2 pb-28">
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 w-full" id="theme-container"></div>
             </div>
             <button onclick="showScreen('screen-input')" class="absolute bottom-6 left-1/2 -translate-x-1/2 text-slate-400 hover:text-white underline bg-slate-900/80 px-4 py-2 rounded-full">Kembali</button>
         </div>
@@ -128,7 +133,7 @@
     </div>
 
     <script>
-        // DATABASE KOSAKATA (Sama seperti sebelumnya, disingkat untuk efisiensi)
+        // DATA
         const themesDB = {
             "PRIBADI 1": [{t:"قَلَنْسُوَةٌ",m:"Peci",s:[{c:"قَ",d:["ك"]},{c:"لَ",d:["لِ"]},{c:"نْ",d:["م"]},{c:"سُ",d:["ش"]},{c:"وَ",d:["و"]},{c:"ةٌ",d:["ت"]}]},{t:"حِجَابٌ",m:"Jilbab",s:[{c:"حِ",d:["خ"]},{c:"جَ",d:["ح"]},{c:"ا",d:[]},{c:"بٌ",d:["بٍ"]}]},{t:"قَمِيصٌ",m:"Kemeja",s:[{c:"قَ",d:["ك"]},{c:"مِ",d:["مَ"]},{c:"ي",d:[]},{c:"صٌ",d:["س"]}]},{t:"حَقِيبَةٌ",m:"Tas",s:[{c:"حَ",d:["خ"]},{c:"قِ",d:["ك"]},{c:"ي",d:[]},{c:"بَ",d:["بِ"]},{c:"ةٌ",d:["ت"]}]},{t:"حِذَاءٌ",m:"Sepatu",s:[{c:"حِ",d:["خ"]},{c:"ذَ",d:["ز"]},{c:"ا",d:[]},{c:"ءٌ",d:["ء"]}]},{t:"جَوْرَبٌ",m:"Kaos kaki",s:[{c:"جَ",d:["ح"]},{c:"وْ",d:["و"]},{c:"رَ",d:["رِ"]},{c:"بٌ",d:["بٍ"]}]},{t:"بَنْطَلُونٌ",m:"Celana panjang",s:[{c:"بَ",d:["بِ"]},{c:"نْ",d:["م"]},{c:"طَ",d:["ت"]},{c:"لُ",d:["لِ"]},{c:"و",d:[]},{c:"نٌ",d:["نٍ"]}]},{t:"تَنُورَةٌ",m:"Rok",s:[{c:"تَ",d:["ط"]},{c:"نُّ",d:["ن"]},{c:"و",d:[]},{c:"رَ",d:["رِ"]},{c:"ةٌ",d:["ت"]}]},{t:"سَاعَةٌ",m:"Jam",s:[{c:"سَ",d:["ص"]},{c:"ا",d:[]},{c:"عَ",d:["ء"]},{c:"ةٌ",d:["ت"]}]},{t:"قُبَّعَةٌ",m:"Topi",s:[{c:"قُ",d:["ك"]},{c:"بَّ",d:["ب"]},{c:"عَ",d:["غ"]},{c:"ةٌ",d:["ت"]}]}],
             "PRIBADI 2": [{t:"سِرْوَالٌ",m:"Celana pendek",s:[{c:"سِ",d:["ص"]},{c:"رْ",d:["رَ"]},{c:"وَا",d:["وَ"]},{c:"لٌ",d:["لٍ"]}]},{t:"إِزَارٌ",m:"Sarung",s:[{c:"إِ",d:["ا"]},{c:"زَ",d:["ذ"]},{c:"ا",d:[]},{c:"رٌ",d:["رٍ"]}]},{t:"مُشَمَّعٌ",m:"Jas hujan",s:[{c:"مُ",d:["مَ"]},{c:"شَ",d:["س"]},{c:"مَّ",d:["مَ"]},{c:"عٌ",d:["غ"]}]},{t:"مِظَلَّةٌ",m:"Payung",s:[{c:"مِ",d:["مَ"]},{c:"ظَ",d:["ز"]},{c:"لَّ",d:["لَ"]},{c:"ةٌ",d:["ت"]}]},{t:"عُلْبَةٌ",m:"Kotak makan",s:[{c:"عُ",d:["غ"]},{c:"لْ",d:["لَ"]},{c:"بَ",d:["بِ"]},{c:"ةٌ",d:["ت"]}]},{t:"زُجَاجَةٌ",m:"Botol minum",s:[{c:"زُ",d:["ذ"]},{c:"جَ",d:["ح"]},{c:"ا",d:[]},{c:"جَ",d:["ح"]},{c:"ةٌ",d:["ت"]}]},{t:"حِزَامٌ",m:"Ikat pinggang",s:[{c:"حِ",d:["خ"]},{c:"زَ",d:["ذ"]},{c:"ا",d:[]},{c:"مٌ",d:["ن"]}]},{t:"مِنْدِيلٌ",m:"Saputangan",s:[{c:"مِ",d:["مَ"]},{c:"نْ",d:["م"]},{c:"دِ",d:["ض"]},{c:"ي",d:[]},{c:"لٌ",d:["لٍ"]}]},{t:"نَعْلٌ",m:"Sandal",s:[{c:"نَ",d:["م"]},{c:"عْ",d:["غ"]},{c:"لٌ",d:["لٍ"]}]}],
@@ -167,7 +172,10 @@
             ]
         };
 
-        // --- INIT ---
+        // MULTI-TOUCH TRACKER
+        const activeTouches = {};
+
+        // INIT
         window.onload = function() { renderThemes(); };
 
         function enterHome() {
@@ -366,47 +374,150 @@
             });
         }
 
-        let dragEl=null, placehold=null, startPar=null, offX=0, offY=0;
+        // --- MULTI-TOUCH & MOUSE DRAG LOGIC ---
         function initDrag(el, pid) {
-            const start = (x, y) => {
+            // MOUSE HANDLER (PC/Cursor)
+            el.addEventListener('mousedown', (e) => {
                 if(el.dataset.locked) return;
-                dragEl = el; startPar = el.parentNode;
-                const r = el.getBoundingClientRect();
-                offX = x - r.left; offY = y - r.top;
-                placehold = el.cloneNode(true); placehold.style.opacity = '0';
-                startPar.insertBefore(placehold, el);
-                el.style.width = r.width+'px'; el.style.height = r.height+'px';
+                e.preventDefault();
+                
+                const rect = el.getBoundingClientRect();
+                const offset = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+                const startPar = el.parentNode;
+                const placeholder = el.cloneNode(true);
+                placeholder.style.opacity = '0';
+                startPar.insertBefore(placeholder, el);
+                
+                el.style.width = rect.width + 'px'; el.style.height = rect.height + 'px';
                 el.classList.add('dragging-active');
                 document.body.appendChild(el);
-                move(x,y);
-            };
-            const move = (x,y) => { if(!dragEl) return; dragEl.style.left=(x-offX)+'px'; dragEl.style.top=(y-offY)+'px'; };
-            const end = (x,y) => {
-                if(!dragEl) return; dragEl.style.display = 'none'; const below = document.elementFromPoint(x,y); dragEl.style.display = 'flex';
-                let ok = false;
-                if(below) {
-                    const slot = below.closest('.slot-zone');
-                    if(slot && slot.id.startsWith(`slot-${pid}`) && slot.dataset.fill === "false") {
-                        if(dragEl.innerText === slot.dataset.exp) { successDrop(slot, dragEl, pid); ok = true; } else failDrop(slot);
+                
+                function onMove(em) {
+                    el.style.left = (em.clientX - offset.x) + 'px';
+                    el.style.top = (em.clientY - offset.y) + 'px';
+                }
+                
+                function onUp(em) {
+                    document.removeEventListener('mousemove', onMove);
+                    document.removeEventListener('mouseup', onUp);
+                    el.style.display = 'none';
+                    const below = document.elementFromPoint(em.clientX, em.clientY);
+                    el.style.display = 'flex';
+                    
+                    let ok = false;
+                    if(below) {
+                        const slot = below.closest('.slot-zone');
+                        if(slot && slot.id.startsWith(`slot-${pid}`) && slot.dataset.fill === "false") {
+                            if(el.innerText === slot.dataset.exp) {
+                                successDrop(slot, el, pid, placeholder); ok = true;
+                            } else failDrop(slot);
+                        }
+                    }
+                    if(!ok) resetDrag(el, placeholder, startPar);
+                }
+                
+                document.addEventListener('mousemove', onMove);
+                document.addEventListener('mouseup', onUp);
+                onMove(e);
+            });
+
+            // TOUCH HANDLER (IFP Multi-User)
+            el.addEventListener('touchstart', (e) => {
+                if(el.dataset.locked) return;
+                e.preventDefault();
+                
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    const touch = e.changedTouches[i];
+                    const touchId = touch.identifier;
+                    const rect = el.getBoundingClientRect();
+                    
+                    // State for this specific touch
+                    const state = {
+                        el: el,
+                        startPar: el.parentNode,
+                        offX: touch.clientX - rect.left,
+                        offY: touch.clientY - rect.top,
+                        placeholder: el.cloneNode(true)
+                    };
+                    
+                    state.placeholder.style.opacity = '0';
+                    state.startPar.insertBefore(state.placeholder, el);
+                    
+                    el.style.width = rect.width + 'px'; el.style.height = rect.height + 'px';
+                    el.classList.add('dragging-active');
+                    document.body.appendChild(el);
+                    
+                    activeTouches[touchId] = state;
+                    
+                    // Initial move
+                    el.style.left = (touch.clientX - state.offX) + 'px';
+                    el.style.top = (touch.clientY - state.offY) + 'px';
+                }
+            }, {passive: false});
+
+            el.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    const touch = e.changedTouches[i];
+                    const state = activeTouches[touch.identifier];
+                    if (state) {
+                        state.el.style.left = (touch.clientX - state.offX) + 'px';
+                        state.el.style.top = (touch.clientY - state.offY) + 'px';
                     }
                 }
-                if(!ok) resetDrag(dragEl); dragEl=null; placehold=null;
-            };
-            el.addEventListener('mousedown', e => { start(e.clientX,e.clientY); const mm=ev=>move(ev.clientX,ev.clientY); const mu=ev=>{document.removeEventListener('mousemove',mm);document.removeEventListener('mouseup',mu);end(ev.clientX,ev.clientY)}; document.addEventListener('mousemove',mm); document.addEventListener('mouseup',mu); });
-            el.addEventListener('touchstart', e => start(e.touches[0].clientX,e.touches[0].clientY), {passive:false});
-            el.addEventListener('touchmove', e => {e.preventDefault();move(e.touches[0].clientX,e.touches[0].clientY)}, {passive:false});
-            el.addEventListener('touchend', e => end(e.changedTouches[0].clientX,e.changedTouches[0].clientY));
+            }, {passive: false});
+
+            el.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    const touch = e.changedTouches[i];
+                    const state = activeTouches[touch.identifier];
+                    if (state) {
+                        state.el.style.display = 'none';
+                        const below = document.elementFromPoint(touch.clientX, touch.clientY);
+                        state.el.style.display = 'flex';
+                        
+                        let ok = false;
+                        if (below) {
+                            const slot = below.closest('.slot-zone');
+                            if (slot && slot.id.startsWith(`slot-${pid}`) && slot.dataset.fill === "false") {
+                                if (state.el.innerText === slot.dataset.exp) {
+                                    successDrop(slot, state.el, pid, state.placeholder);
+                                    ok = true;
+                                } else failDrop(slot);
+                            }
+                        }
+                        if (!ok) resetDrag(state.el, state.placeholder, state.startPar);
+                        delete activeTouches[touch.identifier];
+                    }
+                }
+            });
         }
-        function resetDrag(el) { if(placehold && startPar) { el.classList.remove('dragging-active'); el.style.position=''; el.style.left=''; el.style.top=''; el.style.width=''; el.style.height=''; startPar.insertBefore(el, placehold); placehold.remove(); } else el.remove(); }
-        function successDrop(slot, el, pid) {
-            playSound('pop'); if(placehold) placehold.remove();
+
+        function resetDrag(el, ph, par) {
+            if(ph && par) { 
+                el.classList.remove('dragging-active'); el.style.position=''; el.style.left=''; el.style.top=''; el.style.width=''; el.style.height=''; 
+                par.insertBefore(el, ph); ph.remove(); 
+            } else el.remove(); 
+        }
+
+        function successDrop(slot, el, pid, ph) {
+            playSound('pop'); 
+            if(ph) ph.remove();
             el.classList.remove('dragging-active'); el.style.position='static'; el.style.width='100%'; el.style.height='100%';
             el.classList.add('bg-emerald-500', 'text-white', 'animate-pop', 'cursor-default');
             el.classList.remove('bg-white', 'text-slate-700', 'cursor-grab', 'shadow-[0_4px_0_rgba(0,0,0,0.1)]');
-            el.dataset.locked = true; slot.innerHTML = ''; slot.appendChild(el);
+            el.dataset.locked = true;
+            
+            // Reset event listeners to prevent moving again
+            const newEl = el.cloneNode(true);
+            slot.innerHTML = ''; slot.appendChild(newEl);
+            el.remove(); // remove old draggable from body
+
             slot.classList.remove('border-dashed', 'border-slate-400'); slot.classList.add('border-emerald-500', 'border-solid');
             slot.dataset.fill = "true"; checkWin(pid);
         }
+
         function failDrop(slot) { playSound('err'); slot.classList.add('bg-red-200'); setTimeout(()=>slot.classList.remove('bg-red-200'),300); }
         
         function checkWin(pid) {
