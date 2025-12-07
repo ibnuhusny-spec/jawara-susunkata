@@ -55,19 +55,23 @@
         .input-box { padding: 15px; border-radius: 15px; border: 3px solid #ccc; font-size: 1.2rem; width: 100%; max-width: 300px; text-align: center; font-family: 'Fredoka', sans-serif; outline: none; margin-bottom: 10px; }
         
         /* SPLASH */
-        .game-title-splash {
-            font-family: 'Changa One', cursive; font-size: 4rem; margin: 10px 0; line-height: 1.1;
-            color: var(--accent); -webkit-text-stroke: 4px white; paint-order: stroke fill; text-align: center;
-        }
-        .logo-img { width: 140px; margin-bottom: 20px; filter: drop-shadow(0 5px 5px rgba(0,0,0,0.1)); display: block; margin: 0 auto 20px; }
-        .school-info { font-family: sans-serif; color: white; margin-top: 20px; font-weight: bold; font-size: 1.2rem; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; text-align: center; }
-        .dev-team { font-size: 0.9rem; color: white; margin-top: 5px; text-shadow: 1px 1px 2px black; text-align: center; }
+        .logo-img { width: 100px; margin-bottom: 10px; filter: drop-shadow(0 5px 5px rgba(0,0,0,0.1)); display: block; margin: 0 auto 10px; }
+        
+        /* JUDUL DENGAN GAMBAR JAWARA.PNG */
         .main-title-img {
             width: 300px; max-width: 90%;
             display: block; margin: 10px auto;
             filter: drop-shadow(0 5px 5px rgba(0,0,0,0.2));
             animation: popIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
+
+        .game-title-splash {
+            font-family: 'Changa One', cursive; font-size: 4rem; margin: 10px 0; line-height: 1.1;
+            color: var(--accent); -webkit-text-stroke: 4px white; paint-order: stroke fill; text-align: center;
+        }
+
+        .school-info { font-family: sans-serif; color: white; margin-top: 20px; font-weight: bold; font-size: 1.2rem; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; text-align: center; }
+        .dev-team { font-size: 0.9rem; color: white; margin-top: 5px; text-shadow: 1px 1px 2px black; text-align: center; }
 
         @media (max-width: 600px) { .game-title-splash { font-size: 2.8rem; -webkit-text-stroke: 2px white; } .logo-img { width: 100px; } }
 
@@ -160,6 +164,7 @@
         .vocab-indo { font-size: 0.9rem; font-weight: bold; color: #555; }
         .vocab-play-btn { background: var(--accent); color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; margin-top: 5px; }
 
+        /* MODALS */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 100; }
         .modal-box { background: #fdfdfd; padding: 30px; border-radius: 20px; width: 85%; max-width: 450px; text-align: center; border: 5px solid white; box-shadow: 0 10px 30px rgba(0,0,0,0.3); animation: fadeIn 0.3s; }
         
@@ -268,22 +273,14 @@
                 </div>
                 <div class="game-card">
                     <div class="image-preview"><img id="p1-img" src=""></div>
-                    
-                    <!-- NEW: ARTI INDONESIA -->
                     <div class="word-meaning" id="p1-meaning"></div>
-                    
-                    <!-- HINT ELEMENT -->
                     <div id="p1-hint" class="word-hint"></div>
-                    
-                    <!-- PERBAIKAN POSISI TOMBOL AUDIO -->
                     <button class="btn-metallic btn-blue" style="font-size:0.8rem; padding:5px 15px; min-width:120px; width:auto; margin: 5px auto; display: block;" onclick="playTTS(0)">🔊 Dengar Kata</button>
                 </div>
                 <div class="slots-container" id="p1-slots"></div>
                 <div class="letters-pool" id="p1-pool"></div>
                 
-                <!-- Tombol Cek (Margin adjusted) -->
                 <button id="p1-check" class="btn-metallic btn-green" onpointerdown="handleCheck(event, 1)" style="display:none; transform:scale(0.8); margin: 2px;">Cek Jawaban</button>
-                
                 <div id="p1-msg" style="margin-top:5px; font-weight:bold; height:20px;"></div>
             </div>
 
@@ -300,22 +297,14 @@
                 </div>
                 <div class="game-card">
                     <div class="image-preview"><img id="p2-img" src=""></div>
-                    
-                    <!-- NEW: ARTI INDONESIA -->
                     <div class="word-meaning" id="p2-meaning"></div>
-                    
-                    <!-- HINT ELEMENT -->
                     <div id="p2-hint" class="word-hint"></div>
-                    
-                    <!-- PERBAIKAN POSISI TOMBOL AUDIO -->
                     <button class="btn-metallic btn-blue" style="font-size:0.8rem; padding:5px 15px; min-width:120px; width:auto; margin: 5px auto; display: block;" onclick="playTTS(1)">🔊 Dengar Kata</button>
                 </div>
                 <div class="slots-container" id="p2-slots"></div>
                 <div class="letters-pool" id="p2-pool"></div>
                 
-                <!-- Tombol Cek (Margin adjusted) -->
                 <button id="p2-check" class="btn-metallic btn-green" onpointerdown="handleCheck(event, 2)" style="display:none; transform:scale(0.8); margin: 2px;">Cek Jawaban</button>
-                
                 <div id="p2-msg" style="margin-top:5px; font-weight:bold; height:20px;"></div>
             </div>
         </div>
@@ -591,9 +580,9 @@
         function selectMode(m) {
             appState.mode = m;
             const container = document.getElementById('inputContainer'); container.innerHTML = '';
-            container.innerHTML += `<input type="text" id="name1" class="input-box" placeholder="Nama Pemain 1">`;
+            container.innerHTML += `<input type="text" id="name1" class="input-box" placeholder="Nama Pemain 1" oninput="playSound('pop')">`;
             if(m === 2) {
-                container.innerHTML += `<input type="text" id="name2" class="input-box" placeholder="Nama Pemain 2">`;
+                container.innerHTML += `<input type="text" id="name2" class="input-box" placeholder="Nama Pemain 2" oninput="playSound('pop')">`;
                 document.getElementById('entryTitle').innerText = "Masukkan Nama Pemain";
             } else { document.getElementById('entryTitle').innerText = "Siapa Namamu?"; }
             showScreen('entry-screen');
@@ -791,7 +780,6 @@
             document.getElementById('result-overlay').style.display='flex';
             const content = document.getElementById('resultContent');
             let html = `<div><h1 style="color:var(--primary); font-family:'Amiri'; margin:0;">Waktu Habis!</h1></div><hr>`;
-            
             if(appState.mode === 1) {
                 addToLeaderboard(appState.players[0].name, appState.players[0].score);
                 html += `<div>Skor Akhir: <b style="font-size:2rem">${appState.players[0].score}</b></div><div style="font-size:0.9rem">Salah: ${appState.players[0].mistakes}</div>`;
