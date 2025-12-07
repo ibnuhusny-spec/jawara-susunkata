@@ -1,570 +1,833 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Jawara Susun Kata - SDIT Qurratu A'yun</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Jawara Susun Kata</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Changa+One&family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
     
     <style>
-        /* Fix 100dvh untuk IFP fullscreen */
-        body { 
-            font-family: 'Amiri', serif; 
-            touch-action: none; 
-            overflow: hidden; 
-            height: 100vh; 
-            height: 100dvh; 
-        }
-        .font-latin { font-family: 'Fredoka', sans-serif; }
-        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(5px); }
-        
-        .dragging-active { 
-            position: fixed !important; 
-            z-index: 9999 !important; 
-            pointer-events: none; /* Penting agar elementFromPoint tembus ke bawah */
-            transform: scale(1.2); 
-            box-shadow: 0 25px 30px -5px rgba(0, 0, 0, 0.4);
-            opacity: 0.9;
+        :root {
+            --primary: #27ae60;
+            --secondary: #2980b9;
+            --accent: #f39c12;
+            --wrong: #c0392b;
+            --bg-color: #f4f7f6;
         }
 
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .anim-entry { animation: fadeInUp 0.6s ease-out forwards; }
-        
-        @keyframes flashSuccess { 0% { background-color: white; } 50% { background-color: #d1fae5; } 100% { background-color: white; } }
-        .flash-anim { animation: flashSuccess 0.5s ease-out; }
+        body {
+            font-family: 'Fredoka', sans-serif;
+            background: url('https://i.postimg.cc/J09KP28B/Untitled_1.png') no-repeat center center fixed;
+            background-size: cover;
+            margin: 0; padding: 0;
+            height: 100vh; width: 100vw;
+            display: flex; justify-content: center; align-items: center;
+            overflow: hidden; user-select: none; touch-action: none;
+        }
 
-        @keyframes pulse-green { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
-        .timer-bonus { animation: pulse-green 0.5s; color: #10b981; font-weight: bold; }
+        /* --- SCREEN MANAGER --- */
+        .screen {
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            width: 100%; height: 100%; position: absolute; top: 0; left: 0;
+            transition: opacity 0.5s; z-index: 1; padding: 20px; box-sizing: border-box;
+        }
+        .screen.active { display: flex !important; z-index: 10; animation: fadeIn 0.5s; }
+
+        /* --- STYLES --- */
+        .btn-metallic {
+            position: relative; padding: 15px 30px; font-family: 'Changa One', sans-serif; font-size: 1.5rem;
+            color: white; text-transform: uppercase; text-shadow: 2px 2px 0px rgba(0,0,0,0.2);
+            border: 4px solid white; border-radius: 50px; cursor: pointer; outline: none; margin: 10px;
+            box-shadow: 0 6px 0 rgba(0,0,0,0.2), 0 10px 20px rgba(0,0,0,0.2), inset 0 3px 0 rgba(255,255,255,0.5), inset 0 -3px 0 rgba(0,0,0,0.1);
+            transition: all 0.1s; min-width: 200px; text-align: center;
+            -webkit-tap-highlight-color: transparent; user-select: none; touch-action: manipulation;
+        }
+        .btn-metallic:active { transform: translateY(6px); box-shadow: 0 0 0 rgba(0,0,0,0.2), inset 0 3px 0 rgba(0,0,0,0.1); }
+        .btn-green { background: linear-gradient(180deg, #2ecc71 0%, #27ae60 100%); }
+        .btn-blue { background: linear-gradient(180deg, #3498db 0%, #2980b9 100%); }
+        .btn-orange { background: linear-gradient(180deg, #f1c40f 0%, #f39c12 100%); }
+        .btn-red { background: linear-gradient(180deg, #e74c3c 0%, #c0392b 100%); }
+        .btn-purple { background: linear-gradient(180deg, #9b59b6 0%, #8e44ad 100%); }
+
+        .menu-title { font-family: 'Changa One', cursive; font-size: 2.5rem; color: var(--secondary); margin-bottom: 20px; text-shadow: 2px 2px 0 white; text-align: center; }
+        .input-box { padding: 15px; border-radius: 15px; border: 3px solid #ccc; font-size: 1.2rem; width: 100%; max-width: 300px; text-align: center; font-family: 'Fredoka', sans-serif; outline: none; margin-bottom: 10px; }
         
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #1e293b; }
-        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
+        /* SPLASH */
+        .game-title-splash {
+            font-family: 'Changa One', cursive; font-size: 4rem; margin: 10px 0; line-height: 1.1;
+            color: var(--accent); -webkit-text-stroke: 4px white; paint-order: stroke fill; text-align: center;
+        }
+        .logo-img { width: 140px; margin-bottom: 20px; filter: drop-shadow(0 5px 5px rgba(0,0,0,0.1)); display: block; margin: 0 auto 20px; }
+        .school-info { font-family: sans-serif; color: white; margin-top: 20px; font-weight: bold; font-size: 1.2rem; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; text-align: center; }
+        .dev-team { font-size: 0.9rem; color: white; margin-top: 5px; text-shadow: 1px 1px 2px black; text-align: center; }
+        
+        /* Judul Gambar */
+        .main-title-img {
+            width: 300px; max-width: 90%;
+            display: block; margin: 10px auto;
+            filter: drop-shadow(0 5px 5px rgba(0,0,0,0.2));
+            animation: popIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @media (max-width: 600px) { .game-title-splash { font-size: 2.8rem; -webkit-text-stroke: 2px white; } .logo-img { width: 100px; } }
+
+        /* GAMEPLAY */
+        #game-container { display: flex; width: 100%; height: 100%; padding-top: 80px; box-sizing: border-box; }
+        .player-panel { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 5px; position: relative; border-right: 2px dashed rgba(255,255,255,0.5); }
+        .player-panel:last-child { border-right: none; }
+        
+        .panel-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.85); z-index: 100;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            font-family: 'Changa One', cursive; font-size: 2rem; color: var(--primary);
+            text-align: center; border-radius: 15px;
+        }
+        
+        .game-card { background: white; padding: 5px; border-radius: 15px; border: 2px solid white; box-shadow: 0 5px 10px rgba(0,0,0,0.1); margin-bottom: 5px; width: 95%; max-width: 300px; text-align: center; }
+        .image-preview img { width: 100%; height: 80px; object-fit: contain; }
+        
+        /* HINT STYLE */
+        .word-hint {
+            font-family: 'Amiri', serif; font-size: 2.5rem; color: #888; background: #fffbf0;
+            border: 2px dashed #ffeeba; border-radius: 10px; margin-top: 2px; padding: 0 10px;
+            display: none; line-height: 1.2; pointer-events: none;
+        }
+        
+        /* ARTI KATA */
+        .word-meaning {
+            font-family: 'Fredoka', sans-serif; font-size: 1rem; color: var(--secondary);
+            margin-top: 2px; font-weight: bold;
+        }
+        
+        .slots-container { display: flex; gap: 5px; margin: 5px 0; direction: rtl; min-height: 60px; align-items: center; justify-content: center; flex-wrap: wrap; }
+        .slot { width: 45px; height: 60px; background: #ecf0f1; border: 2px dashed #bdc3c7; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-family: 'Amiri', serif; font-size: 30px; transition: all 0.3s; cursor: pointer; margin: 2px; }
+        .slot.correct { background: #d4edda; border-color: #28a745; }
+        .slot.wrong { background: #f8d7da; border-color: #dc3545; animation: shake 0.4s; }
+
+        /* Layout Adjustment for Pool & Button */
+        .letters-pool { 
+            display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; width: 98%; direction: rtl; 
+            padding: 5px; background: rgba(255,255,255,0.3); border-radius: 15px; 
+            min-height: 80px; margin-bottom: 5px;
+        }
+        .letter-card { width: 45px; height: 45px; background: white; border: 2px solid #bdc3c7; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-family: 'Amiri', serif; font-size: 26px; cursor: grab; box-shadow: 0 4px 0 #bdc3c7; user-select: none; touch-action: none; }
+        .letter-card.touch-dragging { position: fixed; z-index: 9999; opacity: 0.9; transform: scale(1.2); pointer-events: none; box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
+        .letter-card.hidden { opacity: 0; pointer-events: none; }
+        .slot .letter-card { border: none; background: transparent; box-shadow: none; font-size: 38px; margin-top: -5px; width: 100%; height: 100%; cursor: pointer; pointer-events: auto; }
+
+        .top-bar { position: absolute; top: 0; left: 0; width: 100%; height: 80px; background: white; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; box-sizing: border-box; z-index: 50; border-bottom: 4px solid var(--primary); }
+        .timer-badge { background: var(--wrong); color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 1.5rem; min-width: 60px; text-align: center; }
+        .round-indicator { font-size: 0.9rem; font-weight: bold; color: #666; margin-top: 2px; }
+        
+        .p-info { text-align: center; width: 100%; margin-bottom: 2px; }
+        .p-name { font-weight: bold; color: var(--primary); font-size: 1.1rem; }
+        .p-score { font-size: 0.9rem; color: #555; }
+        .p-lives { color: var(--wrong); letter-spacing: 2px; font-size: 1rem;}
+        .nav-btn { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #eee; background: white; cursor: pointer; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; }
+
+        .level-scroll-container { width: 100%; max-height: 70vh; overflow-y: auto; padding: 10px; -ms-overflow-style: none; scrollbar-width: none; }
+        .level-scroll-container::-webkit-scrollbar { display: none; }
+        .level-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; width: 100%; max-width: 900px; margin: 0 auto; }
+        .level-card { background: white; padding: 15px; border-radius: 15px; text-align: center; cursor: pointer; border: 2px solid white; box-shadow: 0 5px 15px rgba(0,0,0,0.1); display: flex; flex-direction: column; align-items: center; gap: 5px; }
+        .level-card:hover { transform: translateY(-5px); border-color: var(--primary); }
+        .level-title { font-weight: bold; color: var(--secondary); font-size: 1.1rem; }
+        .level-sub { font-size: 0.8rem; color: #777; }
+
+        /* MODE TOGGLE */
+        .mode-toggle-container { 
+            display: flex; gap: 10px; margin-bottom: 15px; 
+            background: rgba(255,255,255,0.8); padding: 5px; 
+            border-radius: 50px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .mode-btn { 
+            padding: 10px 20px; border-radius: 30px; border: none; 
+            font-family: 'Fredoka'; font-weight: bold; cursor: pointer; 
+            transition: all 0.3s; background: transparent; color: #555; 
+            font-size: 1rem;
+        }
+        .mode-btn.active { 
+            background: var(--secondary); color: white; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2); 
+            transform: scale(1.05);
+        }
+
+        /* VOCABULARY BANK SCREEN */
+        .vocab-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; width: 100%; padding-bottom: 20px; }
+        .vocab-card { background: white; border-radius: 15px; padding: 10px; text-align: center; box-shadow: 0 3px 6px rgba(0,0,0,0.1); border: 1px solid #eee; }
+        .vocab-card img { width: 80px; height: 80px; object-fit: contain; margin-bottom: 5px; }
+        .vocab-arab { font-family: 'Amiri', serif; font-size: 1.8rem; color: var(--primary); margin: 5px 0; }
+        .vocab-indo { font-size: 0.9rem; font-weight: bold; color: #555; }
+        .vocab-play-btn { background: var(--accent); color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; margin-top: 5px; }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 100; }
+        .modal-box { background: #fdfdfd; padding: 30px; border-radius: 20px; width: 85%; max-width: 450px; text-align: center; border: 5px solid white; box-shadow: 0 10px 30px rgba(0,0,0,0.3); animation: fadeIn 0.3s; }
+        
+        .lb-list { list-style: none; padding: 0; text-align: left; max-height: 300px; overflow-y: auto; }
+        .lb-item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #eee; font-size: 1.1rem; }
+        .lb-item:first-child { color: var(--accent); font-weight: bold; font-size: 1.3rem; }
+
+        .settings-section { margin: 15px 0; text-align: left; }
+        .settings-title { font-weight: bold; color: var(--primary); margin-bottom: 5px; display: block; }
+        .radio-group { background: #eee; padding: 10px; border-radius: 10px; }
+        .radio-item { display: block; margin: 5px 0; cursor: pointer; }
+        
+        /* INSTRUCTIONS LIST */
+        .instruction-list { text-align: left; margin: 10px 0; font-size: 0.9rem; color: #555; }
+        .instruction-list li { margin-bottom: 5px; }
+
+        #toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 50px; padding: 16px; position: fixed; z-index: 200; left: 50%; bottom: 30px; transform: translateX(-50%); font-size: 17px; opacity: 0; transition: opacity 0.3s; }
+        #toast.show { visibility: visible; opacity: 1; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        @keyframes shake { 0%,100% {transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
+        @keyframes popIn { 0% { opacity: 0; transform: scale(0.5); } 100% { opacity: 1; transform: scale(1); } }
+        
+        /* Audio Check Button */
+        .audio-check { position:absolute; top:20px; left:20px; font-size:1.5rem; background:rgba(255,255,255,0.3); width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; border:2px solid white; }
     </style>
 </head>
-<body class="bg-slate-900 w-screen flex flex-col items-center justify-center relative overflow-hidden">
+<body>
 
-    <div class="absolute inset-0 overflow-hidden pointer-events-none">
-        <div class="absolute -top-20 -left-20 w-96 h-96 bg-emerald-600 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
-        <div class="absolute top-0 -right-20 w-96 h-96 bg-yellow-600 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
-        <div class="absolute -bottom-32 left-20 w-96 h-96 bg-blue-600 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-4000"></div>
-    </div>
+    <!-- 1. SPLASH (WAJIB KLIK TOMBOL) -->
+    <div id="splash-screen" class="screen active">
+        <div class="audio-check" onclick="testSound(event)">🔊</div>
+        <img src="logo.png" alt="Logo Sekolah" class="logo-img" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2602/2602414.png'">
+        
+        <!-- JUDUL DARI GAMBAR -->
+        <img src="jawara.png" alt="JAWARA SUSUN KATA" class="main-title-img" onerror="this.style.display='none'; document.getElementById('fallback-title').style.display='block';">
+        <div id="fallback-title" class="game-title-splash" style="display:none;">JAWARA<br>SUSUN KATA</div>
 
-    <div id="screen-splash" class="absolute inset-0 z-[100] bg-gradient-to-br from-slate-900 to-emerald-950 flex flex-col items-center justify-center text-white font-latin text-center px-4" dir="ltr">
-        <img src="logo.png" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2990/2990264.png'" alt="Logo" class="w-32 h-32 md:w-40 md:h-40 mb-6 object-contain animate-bounce drop-shadow-2xl">
-        <h1 class="text-5xl md:text-7xl font-bold mb-2 text-yellow-400 font-serif drop-shadow-lg opacity-0 anim-entry">JAWARA SUSUN KATA</h1>
-        <h2 class="text-3xl md:text-4xl font-bold text-white font-serif mb-8 opacity-0 anim-entry delay-100">EDISI LENGKAP</h2>
-        <div class="bg-white/10 px-6 py-3 rounded-full mb-12 border border-white/20 opacity-0 anim-entry delay-200 backdrop-blur-sm">
-            <p class="text-emerald-300 text-sm md:text-lg tracking-widest font-bold uppercase">SDIT Qurratu A'yun Al-Islami Maros</p>
-        </div>
-        <button onclick="enterHome()" class="px-12 py-4 rounded-2xl bg-emerald-500 text-white text-xl font-bold hover:bg-emerald-400 transition-all shadow-lg border-b-4 border-emerald-700 active:translate-y-1 active:border-b-0 opacity-0 anim-entry delay-300">MULAI ▶</button>
-    </div>
-
-    <div id="screen-home" class="hidden absolute inset-0 z-40 flex flex-col items-center justify-center text-white font-latin" dir="ltr">
-        <h2 class="text-4xl font-bold mb-8 text-white drop-shadow-md">Pilih Jumlah Pemain</h2>
-        <div class="flex gap-6 mb-10">
-            <button onclick="goToInput(1)" class="bg-white text-emerald-800 w-48 py-6 rounded-3xl shadow-xl hover:bg-yellow-300 hover:scale-105 transition-all flex flex-col items-center gap-2 border-b-8 border-emerald-900 active:border-b-0 active:translate-y-2"><span class="text-5xl">👤</span><span class="text-xl font-bold">1 Pemain</span></button>
-            <button onclick="goToInput(2)" class="bg-white text-emerald-800 w-48 py-6 rounded-3xl shadow-xl hover:bg-yellow-300 hover:scale-105 transition-all flex flex-col items-center gap-2 border-b-8 border-emerald-900 active:border-b-0 active:translate-y-2"><span class="text-5xl">👥</span><span class="text-xl font-bold">2 Pemain</span></button>
-        </div>
-        <div class="bg-black/40 p-4 rounded-xl text-center text-slate-300 text-sm">Mode Multi-Touch Aktif: Bisa main bersamaan!</div>
-    </div>
-
-    <div id="screen-input" class="hidden absolute inset-0 z-50 bg-emerald-900 flex flex-col items-center justify-center text-white font-latin px-4" dir="ltr">
-        <h2 class="text-3xl font-bold mb-8">Masukkan Nama</h2>
-        <div id="input-container" class="flex flex-col md:flex-row gap-6 mb-10 w-full max-w-3xl justify-center"></div>
-        <div class="flex gap-4">
-            <button onclick="showScreen('screen-home')" class="px-6 py-3 rounded-xl text-slate-300 hover:text-white">Kembali</button>
-            <button onclick="validateToTheme()" class="bg-yellow-400 text-emerald-900 px-12 py-4 rounded-2xl font-bold text-2xl shadow-xl hover:bg-yellow-300 hover:scale-105 transition-all border-b-4 border-yellow-600 active:border-b-0 active:translate-y-1">Lanjut</button>
+        <div class="school-info">SDIT Qurratu A'yun Al-Islami Maros</div>
+        <div class="dev-team">Tim Pengembang Sekolah</div>
+        <div style="margin-top:40px;">
+            <!-- Tombol ini memicu Audio Context -->
+            <button class="btn-metallic btn-green" onclick="initAudioContext()" style="font-size: 1.5rem; padding: 15px 50px; animation: shake 3s infinite;">KLIK UNTUK MULAI</button>
         </div>
     </div>
 
-    <div id="screen-theme" class="hidden absolute inset-0 z-50 bg-slate-900 flex flex-col items-center justify-start text-white font-latin px-4 overflow-hidden" dir="ltr">
-        <div class="w-full max-w-5xl flex flex-col h-full py-8">
-            <h2 class="text-4xl font-bold mb-2 text-yellow-300 text-center shrink-0">Pilih Sesi / Tema</h2>
-            <p class="text-slate-400 mb-6 text-center shrink-0">Silakan pilih kategori hafalan</p>
-            <div class="flex-1 overflow-y-auto pr-2 pb-28">
-                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 w-full" id="theme-container"></div>
+    <!-- 2. MODE SELECT -->
+    <div id="mode-screen" class="screen">
+        <h2 class="menu-title">Pilih Mode Main</h2>
+        <button class="btn-metallic btn-blue" onclick="selectMode(1)">👤 1 Player</button>
+        <button class="btn-metallic btn-orange" onclick="selectMode(2)">👥 2 Player</button>
+        
+        <!-- Tombol Petunjuk -->
+        <button class="btn-metallic btn-purple" onclick="openInstructions()" style="margin-top: 20px; font-size: 1rem; padding: 10px 20px;">❓ Petunjuk Permainan</button>
+    </div>
+
+    <!-- 3. INPUT NAMA -->
+    <div id="entry-screen" class="screen">
+        <h2 class="menu-title" id="entryTitle">Masukkan Nama</h2>
+        <div id="inputContainer" style="width: 100%; display: flex; flex-direction: column; align-items: center;"></div>
+        <button class="btn-metallic btn-green" onclick="submitName()">🚀 MASUK</button>
+        <div class="icon-btn-container" style="display:flex; gap:15px; margin-top:20px; justify-content:center;">
+            <button class="nav-btn" onclick="openSettings()">⚙️</button>
+            <button class="nav-btn" onclick="openLeaderboard()">🏆</button>
+            <button class="nav-btn" onclick="showScreen('mode-screen')">🔙</button>
+        </div>
+    </div>
+
+    <!-- 4. LEVEL / THEME SELECT -->
+    <div id="level-screen" class="screen">
+        <div class="mode-toggle-container">
+            <button id="btnPlayMode" class="mode-btn active" onclick="setAppMode('play')">🎮 MODE BERMAIN</button>
+            <button id="btnStudyMode" class="mode-btn" onclick="setAppMode('study')">📖 BANK KOSAKATA</button>
+        </div>
+        
+        <h2 class="menu-title" id="themeTitle" style="margin-bottom:10px; font-size:1.8rem;">Pilih Tema</h2>
+        
+        <div class="level-scroll-container">
+            <div id="levelGrid" class="level-grid"></div>
+        </div>
+        <button class="btn-metallic btn-red" style="font-size:1rem; padding:10px 20px; margin-top:10px;" onclick="showScreen('entry-screen')">Kembali</button>
+    </div>
+
+    <!-- 5. GAME SCREEN -->
+    <div id="game-screen" class="screen" style="padding:0;">
+        <div class="top-bar">
+            <button class="nav-btn" onclick="confirmExit()">🏠</button>
+            <div style="display:flex; align-items:center;">
+                <div class="timer-badge" id="dispTimer">60</div>
+                <div class="round-indicator" id="roundDisp">Soal 1/10</div>
             </div>
-            <button onclick="showScreen('screen-input')" class="absolute bottom-6 left-1/2 -translate-x-1/2 text-slate-400 hover:text-white underline bg-slate-900/80 px-4 py-2 rounded-full">Kembali</button>
+            <button class="nav-btn" onclick="showScreen('level-screen')">🔙</button>
         </div>
-    </div>
 
-    <div id="game-ui" class="hidden absolute top-0 left-0 right-0 h-24 px-4 flex justify-between items-center z-40 bg-slate-900/90 backdrop-blur-md text-white font-latin shadow-xl border-b border-white/10" dir="ltr">
-        <div class="flex items-center gap-4 w-1/3">
-            <button onclick="confirmHome()" class="bg-slate-700 hover:bg-red-500 text-white p-3 rounded-xl transition-colors">🏠</button>
-            <div id="ui-p2" class="hidden flex-col bg-blue-900/50 px-4 py-2 rounded-xl border-l-4 border-blue-500 min-w-[140px]">
-                <div class="flex justify-between items-center">
-                    <span id="name-p2" class="text-blue-200 text-xs font-bold uppercase truncate max-w-[80px]">P2</span>
-                    <span id="lvl-p2" class="bg-blue-600 text-white text-[10px] px-2 rounded-full">LV 1</span>
+        <div id="game-container">
+            <!-- P1 -->
+            <div class="player-panel" id="p1-panel">
+                <div class="panel-overlay" id="p1-overlay"><div>✅ SELESAI</div><div style="font-size:1rem; margin-top:10px;">Menunggu Lawan...</div></div>
+                <div class="p-info">
+                    <div class="p-name" id="p1-name-disp">P1</div>
+                    <div style="display:flex; justify-content:center; gap:10px; align-items:center;">
+                        <span class="p-lives" id="p1-lives">❤️❤️❤️</span>
+                        <span class="p-score" id="p1-score-disp">0</span>
+                    </div>
+                    <div class="round-indicator" id="p1-round-disp">Soal 1/10</div>
                 </div>
-                <span id="score-p2" class="text-3xl font-bold text-white leading-none">0</span>
-            </div>
-        </div>
-        <div class="flex flex-col items-center w-1/3">
-            <div id="timer-box" class="bg-slate-800 px-6 py-2 rounded-full border-2 border-slate-600 shadow-inner flex flex-col items-center">
-                <span id="timer-display" class="text-4xl font-bold text-yellow-400 tabular-nums">60</span>
-                <span class="text-[10px] text-slate-400 uppercase tracking-widest">Waktu</span>
-            </div>
-        </div>
-        <div id="ui-p1" class="flex flex-col items-end w-1/3">
-            <div class="flex flex-col items-end bg-emerald-900/50 px-4 py-2 rounded-xl border-r-4 border-emerald-500 min-w-[140px]">
-                <div class="flex justify-between items-center gap-2 w-full">
-                    <span id="lvl-p1" class="bg-emerald-600 text-white text-[10px] px-2 rounded-full">LV 1</span>
-                    <span id="name-p1" class="text-emerald-200 text-xs font-bold uppercase truncate max-w-[80px]">P1</span>
+                <div class="game-card">
+                    <div class="image-preview"><img id="p1-img" src=""></div>
+                    
+                    <div class="word-meaning" id="p1-meaning"></div>
+                    <div id="p1-hint" class="word-hint"></div>
+                    <button class="btn-metallic btn-blue" style="font-size:0.8rem; padding:5px 15px; min-width:120px; width:auto; margin: 5px auto; display: block;" onclick="playTTS(0)">🔊 Dengar Kata</button>
                 </div>
-                <span id="score-p1" class="text-3xl font-bold text-white leading-none">0</span>
+                <div class="slots-container" id="p1-slots"></div>
+                <div class="letters-pool" id="p1-pool"></div>
+                
+                <button id="p1-check" class="btn-metallic btn-green" onpointerdown="handleCheck(event, 1)" style="display:none; transform:scale(0.8); margin: 2px;">Cek Jawaban</button>
+                
+                <div id="p1-msg" style="margin-top:5px; font-weight:bold; height:20px;"></div>
+            </div>
+
+            <!-- P2 -->
+            <div class="player-panel" id="p2-panel" style="display:none; border-left: 2px dashed #ccc;">
+                <div class="panel-overlay" id="p2-overlay"><div>✅ SELESAI</div><div style="font-size:1rem; margin-top:10px;">Menunggu Lawan...</div></div>
+                <div class="p-info">
+                    <div class="p-name" id="p2-name-disp">P2</div>
+                    <div style="display:flex; justify-content:center; gap:10px; align-items:center;">
+                        <span class="p-lives" id="p2-lives">❤️❤️❤️</span>
+                        <span class="p-score" id="p2-score-disp">0</span>
+                    </div>
+                    <div class="round-indicator" id="p2-round-disp">Soal 1/10</div>
+                </div>
+                <div class="game-card">
+                    <div class="image-preview"><img id="p2-img" src=""></div>
+                    <div class="word-meaning" id="p2-meaning"></div>
+                    <div id="p2-hint" class="word-hint"></div>
+                    <button class="btn-metallic btn-blue" style="font-size:0.8rem; padding:5px 15px; min-width:120px; width:auto; margin: 5px auto; display: block;" onclick="playTTS(1)">🔊 Dengar Kata</button>
+                </div>
+                <div class="slots-container" id="p2-slots"></div>
+                <div class="letters-pool" id="p2-pool"></div>
+                <button id="p2-check" class="btn-metallic btn-green" onpointerdown="handleCheck(event, 2)" style="display:none; transform:scale(0.8); margin: 2px;">Cek Jawaban</button>
+                <div id="p2-msg" style="margin-top:5px; font-weight:bold; height:20px;"></div>
             </div>
         </div>
     </div>
 
-    <div id="game-container" class="w-full h-full hidden pt-28 pb-4 px-2 md:px-4 gap-4 justify-center items-stretch relative bg-slate-100 z-10"></div>
-
-    <div id="screen-result" class="hidden absolute inset-0 z-[60] bg-slate-900/95 backdrop-blur-xl flex flex-col items-center justify-center font-latin text-white" dir="ltr">
-        <h2 class="text-5xl font-bold mb-4 text-yellow-400">WAKTU HABIS!</h2>
-        <div id="podium-area" class="flex gap-6 mb-8 items-end justify-center w-full"></div>
-        <div class="bg-white/10 p-6 rounded-xl w-full max-w-lg mb-8 backdrop-blur-md border border-white/10 text-center">
-            <h3 class="font-bold text-emerald-300 mb-2">Tema yang Dimainkan</h3>
-            <div id="played-theme-name" class="text-2xl font-bold text-white mb-4 border-b border-white/20 pb-4"></div>
-            <p class="text-slate-300 text-sm">Hebat! Terus tingkatkan hafalanmu.</p>
+    <!-- VOCABULARY SCREEN -->
+    <div id="vocab-screen" class="screen">
+        <div class="top-bar">
+            <button class="nav-btn" onclick="showScreen('level-screen')">🔙</button>
+            <div style="font-family:'Changa One'; font-size:1.5rem; color:var(--secondary);" id="vocabTitle">Bank Kosakata</div>
+            <div style="width:40px;"></div> 
         </div>
-        <button onclick="showScreen('screen-theme')" class="bg-emerald-500 hover:bg-emerald-600 text-white px-10 py-4 rounded-xl text-xl font-bold shadow-lg transition-transform hover:-translate-y-1">Main Tema Lain ⟳</button>
+        <div class="level-scroll-container" style="margin-top:80px;">
+            <div id="vocabGrid" class="vocab-grid"></div>
+        </div>
     </div>
+
+    <!-- MODALS -->
+    <div id="result-overlay" class="modal-overlay">
+        <div class="modal-box" style="border-color: var(--accent);">
+            <h2 id="resultTitle" class="menu-title" style="margin-bottom:0;">SELESAI!</h2>
+            <div id="resultContent" style="font-size:1.2rem; color:#333; margin:20px 0;"></div>
+            <button class="btn-metallic btn-blue" onclick="backToLevels()">Lanjut</button>
+        </div>
+    </div>
+
+    <div id="settings-modal" class="modal-overlay">
+        <div class="modal-box">
+            <h2 class="menu-title">Pengaturan</h2>
+            <div class="settings-section">
+                <span class="settings-title">Waktu Permainan:</span>
+                <div class="radio-group">
+                    <label class="radio-item"><input type="radio" name="time" value="180"> 180 Detik (Ada Bantuan)</label>
+                    <label class="radio-item"><input type="radio" name="time" value="150"> 150 Detik (Ada Bantuan)</label>
+                    <label class="radio-item"><input type="radio" name="time" value="120" checked> 120 Detik (Ada Bantuan)</label>
+                    <label class="radio-item"><input type="radio" name="time" value="90"> 90 Detik (Tanpa Bantuan)</label>
+                    <label class="radio-item"><input type="radio" name="time" value="60"> 60 Detik (Tanpa Bantuan)</label>
+                </div>
+            </div>
+            <div class="settings-section">
+                <span class="settings-title">Suara & Musik:</span>
+                <div class="radio-group">
+                    <label class="radio-item"><input type="radio" name="sound" value="on" checked> Hidup (On)</label>
+                    <label class="radio-item"><input type="radio" name="sound" value="off"> Mati (Off)</label>
+                </div>
+            </div>
+            <button class="btn-metallic btn-blue" onclick="closeSettings()">Simpan</button>
+        </div>
+    </div>
+
+    <div id="leaderboard-modal" class="modal-overlay">
+        <div class="modal-box">
+            <h2>🏆 Top 3 Skor</h2>
+            <div id="lb-container" style="min-height:100px; display:flex; align-items:center; justify-content:center;">
+                <ul id="lb-list" class="lb-list" style="width:100%;"></ul>
+                <div id="lb-empty-msg" style="color:#888;">Belum ada skor.<br>Jadilah yang pertama!</div>
+            </div>
+            <button class="btn-metallic btn-red" onclick="closeLeaderboard()">Tutup</button>
+        </div>
+    </div>
+
+    <div id="instruction-modal" class="modal-overlay">
+        <div class="modal-box" style="text-align: left;">
+            <h2 class="menu-title" style="margin-bottom: 10px;">Petunjuk Permainan</h2>
+            <ul class="instruction-list">
+                <li>1. Pilih Mode 1 Player atau 2 Player.</li>
+                <li>2. Pilih Tema/Sesi yang ingin dimainkan.</li>
+                <li>3. Susun huruf-huruf Arab menjadi kata yang sesuai dengan gambar.</li>
+                <li>4. <b>Geser (Drag)</b> huruf ke kotak kosong yang tersedia.</li>
+                <li>5. Jika salah, ketuk huruf di dalam kotak untuk menghapusnya.</li>
+                <li>6. Selesaikan 10 soal sebelum waktu habis!</li>
+            </ul>
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="btn-metallic btn-blue" onclick="closeInstructions()">Saya Mengerti</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="toast">Notifikasi</div>
 
     <script>
-        // DATA
-        const themesDB = {
-            "PRIBADI 1": [{t:"قَلَنْسُوَةٌ",m:"Peci",s:[{c:"قَ",d:["ك"]},{c:"لَ",d:["لِ"]},{c:"نْ",d:["م"]},{c:"سُ",d:["ش"]},{c:"وَ",d:["و"]},{c:"ةٌ",d:["ت"]}]},{t:"حِجَابٌ",m:"Jilbab",s:[{c:"حِ",d:["خ"]},{c:"جَ",d:["ح"]},{c:"ا",d:[]},{c:"بٌ",d:["بٍ"]}]},{t:"قَمِيصٌ",m:"Kemeja",s:[{c:"قَ",d:["ك"]},{c:"مِ",d:["مَ"]},{c:"ي",d:[]},{c:"صٌ",d:["س"]}]},{t:"حَقِيبَةٌ",m:"Tas",s:[{c:"حَ",d:["خ"]},{c:"قِ",d:["ك"]},{c:"ي",d:[]},{c:"بَ",d:["بِ"]},{c:"ةٌ",d:["ت"]}]},{t:"حِذَاءٌ",m:"Sepatu",s:[{c:"حِ",d:["خ"]},{c:"ذَ",d:["ز"]},{c:"ا",d:[]},{c:"ءٌ",d:["ء"]}]},{t:"جَوْرَبٌ",m:"Kaos kaki",s:[{c:"جَ",d:["ح"]},{c:"وْ",d:["و"]},{c:"رَ",d:["رِ"]},{c:"بٌ",d:["بٍ"]}]},{t:"بَنْطَلُونٌ",m:"Celana panjang",s:[{c:"بَ",d:["بِ"]},{c:"نْ",d:["م"]},{c:"طَ",d:["ت"]},{c:"لُ",d:["لِ"]},{c:"و",d:[]},{c:"نٌ",d:["نٍ"]}]},{t:"تَنُورَةٌ",m:"Rok",s:[{c:"تَ",d:["ط"]},{c:"نُّ",d:["ن"]},{c:"و",d:[]},{c:"رَ",d:["رِ"]},{c:"ةٌ",d:["ت"]}]},{t:"سَاعَةٌ",m:"Jam",s:[{c:"سَ",d:["ص"]},{c:"ا",d:[]},{c:"عَ",d:["ء"]},{c:"ةٌ",d:["ت"]}]},{t:"قُبَّعَةٌ",m:"Topi",s:[{c:"قُ",d:["ك"]},{c:"بَّ",d:["ب"]},{c:"عَ",d:["غ"]},{c:"ةٌ",d:["ت"]}]}],
-            "PRIBADI 2": [{t:"سِرْوَالٌ",m:"Celana pendek",s:[{c:"سِ",d:["ص"]},{c:"رْ",d:["رَ"]},{c:"وَا",d:["وَ"]},{c:"لٌ",d:["لٍ"]}]},{t:"إِزَارٌ",m:"Sarung",s:[{c:"إِ",d:["ا"]},{c:"زَ",d:["ذ"]},{c:"ا",d:[]},{c:"رٌ",d:["رٍ"]}]},{t:"مُشَمَّعٌ",m:"Jas hujan",s:[{c:"مُ",d:["مَ"]},{c:"شَ",d:["س"]},{c:"مَّ",d:["مَ"]},{c:"عٌ",d:["غ"]}]},{t:"مِظَلَّةٌ",m:"Payung",s:[{c:"مِ",d:["مَ"]},{c:"ظَ",d:["ز"]},{c:"لَّ",d:["لَ"]},{c:"ةٌ",d:["ت"]}]},{t:"عُلْبَةٌ",m:"Kotak makan",s:[{c:"عُ",d:["غ"]},{c:"لْ",d:["لَ"]},{c:"بَ",d:["بِ"]},{c:"ةٌ",d:["ت"]}]},{t:"زُجَاجَةٌ",m:"Botol minum",s:[{c:"زُ",d:["ذ"]},{c:"جَ",d:["ح"]},{c:"ا",d:[]},{c:"جَ",d:["ح"]},{c:"ةٌ",d:["ت"]}]},{t:"حِزَامٌ",m:"Ikat pinggang",s:[{c:"حِ",d:["خ"]},{c:"زَ",d:["ذ"]},{c:"ا",d:[]},{c:"مٌ",d:["ن"]}]},{t:"مِنْدِيلٌ",m:"Saputangan",s:[{c:"مِ",d:["مَ"]},{c:"نْ",d:["م"]},{c:"دِ",d:["ض"]},{c:"ي",d:[]},{c:"لٌ",d:["لٍ"]}]},{t:"نَعْلٌ",m:"Sandal",s:[{c:"نَ",d:["م"]},{c:"عْ",d:["غ"]},{c:"لٌ",d:["لٍ"]}]}],
-            "ALAT TULIS": [{t:"كِتَابٌ",m:"Buku cetak",s:[{c:"كِ",d:["ق"]},{c:"تَ",d:["ط"]},{c:"ا",d:[]},{c:"بٌ",d:["بٍ"]}]},{t:"دَفْتَرٌ",m:"Buku tulis",s:[{c:"دَ",d:["ذ"]},{c:"فْ",d:["فَ"]},{c:"تَ",d:["ط"]},{c:"رٌ",d:["رٍ"]}]},{t:"بَرَّايَةٌ",m:"Peraut",s:[{c:"بَ",d:["ت"]},{c:"رَّ",d:["رَ"]},{c:"ا",d:[]},{c:"يَ",d:["ي"]},{c:"ةٌ",d:["ت"]}]},{t:"مِسْطَرَةٌ",m:"Penggaris",s:[{c:"مِ",d:["مَ"]},{c:"سْ",d:["ص"]},{c:"طَ",d:["ت"]},{c:"رَ",d:["رِ"]},{c:"ةٌ",d:["ت"]}]},{t:"قَلَمٌ",m:"Pulpen",s:[{c:"قَ",d:["ك"]},{c:"لَ",d:["لِ"]},{c:"مٌ",d:["ن"]}]},{t:"مِرْسَمٌ",m:"Pensil",s:[{c:"مِ",d:["مُ"]},{c:"رْ",d:["رَ"]},{c:"سَ",d:["ش"]},{c:"مٌ",d:["ن"]}]},{t:"مُزِيلٌ",m:"Tipe-X",s:[{c:"مُ",d:["مَ"]},{c:"زِ",d:["ذ"]},{c:"ي",d:[]},{c:"لٌ",d:["لٍ"]}]},{t:"مِمْحَاةٌ",m:"Penghapus",s:[{c:"مِ",d:["مَ"]},{c:"مْ",d:["ن"]},{c:"حَ",d:["خ"]},{c:"ا",d:[]},{c:"ةٌ",d:["ت"]}]},{t:"حِبْرٌ",m:"Tinta",s:[{c:"حِ",d:["خ"]},{c:"بْ",d:["بَ"]},{c:"رٌ",d:["رٍ"]}]},{t:"مِقْلَمَةٌ",m:"Tempat Pulpen",s:[{c:"مِ",d:["مَ"]},{c:"قْ",d:["ك"]},{c:"لَ",d:["لِ"]},{c:"مَ",d:["مُ"]},{c:"ةٌ",d:["ت"]}]}],
-            "KANTOR & SEKOLAH": [{t:"شَهَادَةٌ",m:"Ijazah",s:[{c:"شَ",d:["س"]},{c:"هَ",d:["ح"]},{c:"ا",d:[]},{c:"دَ",d:["ذ"]},{c:"ةٌ",d:["ت"]}]},{t:"خَرِيطَةٌ",m:"Peta",s:[{c:"خَ",d:["ح"]},{c:"رِ",d:["رَ"]},{c:"ي",d:[]},{c:"طَ",d:["ت"]},{c:"ةٌ",d:["ت"]}]},{t:"سَبُّورَةٌ",m:"Papan tulis",s:[{c:"سَ",d:["ص"]},{c:"بُّ",d:["بُ"]},{c:"و",d:[]},{c:"رَ",d:["رِ"]},{c:"ةٌ",d:["ت"]}]},{t:"قِرْطَاسٌ",m:"Kertas",s:[{c:"قِ",d:["ك"]},{c:"رْ",d:["رَ"]},{c:"طَ",d:["ت"]},{c:"ا",d:[]},{c:"سٌ",d:["ش"]}]},{t:"كَشْفٌ",m:"Daftar hadir",s:[{c:"كَ",d:["ق"]},{c:"شْ",d:["س"]},{c:"فٌ",d:["فٍ"]}]},{t:"غِرَاءٌ",m:"Lem",s:[{c:"غِ",d:["ع"]},{c:"رَ",d:["رِ"]},{c:"ا",d:[]},{c:"ءٌ",d:["ع"]}]},{t:"غِلَافٌ",m:"Amplop",s:[{c:"غِ",d:["ع"]},{c:"لَ",d:["لِ"]},{c:"ا",d:[]},{c:"فٌ",d:["فٍ"]}]},{t:"تَقْوِيمٌ",m:"Kalender",s:[{c:"تَ",d:["ط"]},{c:"قْ",d:["ك"]},{c:"وِ",d:["و"]},{c:"ي",d:[]},{c:"مٌ",d:["ن"]}]},{t:"رِسَالَةٌ",m:"Surat",s:[{c:"رِ",d:["رَ"]},{c:"سَ",d:["ص"]},{c:"ا",d:[]},{c:"لَ",d:["لِ"]},{c:"ةٌ",d:["ت"]}]},{t:"مَلَفٌ",m:"Map",s:[{c:"مَ",d:["ن"]},{c:"لَ",d:["لِ"]},{c:"فٌ",d:["فٍ"]}]}],
-            "SEKOLAH": [{t:"مَدْرَسَةٌ",m:"Sekolah",s:[{c:"مَ",d:["مِ"]},{c:"دْ",d:["ذ"]},{c:"رَ",d:["رِ"]},{c:"سَ",d:["ص"]},{c:"ةٌ",d:["ت"]}]},{t:"فَصْلٌ",m:"Kelas",s:[{c:"فَ",d:["ق"]},{c:"صْ",d:["س"]},{c:"لٌ",d:["لٍ"]}]},{t:"مَكْتَبَةٌ",m:"Perpustakaan",s:[{c:"مَ",d:["مِ"]},{c:"كْ",d:["ق"]},{c:"تَ",d:["ط"]},{c:"بَ",d:["بِ"]},{c:"ةٌ",d:["ت"]}]},{t:"مَعْمَلٌ",m:"Laboratorium",s:[{c:"مَ",d:["ن"]},{c:"عْ",d:["غ"]},{c:"مَ",d:["مِ"]},{c:"لٌ",d:["لٍ"]}]},{t:"مُصَلَّى",m:"Musala",s:[{c:"مُ",d:["مَ"]},{c:"صَ",d:["س"]},{c:"لَّ",d:["لَ"]},{c:"ى",d:[]}]},{t:"سَاحَةٌ",m:"Halaman",s:[{c:"سَ",d:["ص"]},{c:"ا",d:[]},{c:"حَ",d:["خ"]},{c:"ةٌ",d:["ت"]}]},{t:"مَقْصَفٌ",m:"Kantin",s:[{c:"مَ",d:["مِ"]},{c:"قْ",d:["ك"]},{c:"صَ",d:["س"]},{c:"فٌ",d:["فٍ"]}]},{t:"مَوْقِفٌ",m:"Parkiran",s:[{c:"مَ",d:["ن"]},{c:"وْ",d:["و"]},{c:"قِ",d:["ك"]},{c:"فٌ",d:["فٍ"]}]},{t:"حَمَّامٌ",m:"Kamar mandi",s:[{c:"حَ",d:["خ"]},{c:"مَّ",d:["مَ"]},{c:"ا",d:[]},{c:"مٌ",d:["ن"]}]},{t:"مِرْحَاضٌ",m:"WC",s:[{c:"مِ",d:["مَ"]},{c:"رْ",d:["رَ"]},{c:"حَ",d:["خ"]},{c:"ا",d:[]},{c:"ضٌ",d:["ظ"]}]}],
-            "BAGIAN RUMAH": [{t:"بَيْتٌ",m:"Rumah",s:[{c:"بَ",d:["ت"]},{c:"يْ",d:["ي"]},{c:"تٌ",d:["ط"]}]},{t:"بَابٌ",m:"Pintu",s:[{c:"بَ",d:["ت"]},{c:"ا",d:[]},{c:"بٌ",d:["بٍ"]}]},{t:"نَافِذَةٌ",m:"Jendela",s:[{c:"نَ",d:["م"]},{c:"ا",d:[]},{c:"فِ",d:["فَ"]},{c:"ذَ",d:["ز"]},{c:"ةٌ",d:["ت"]}]},{t:"سَقْفٌ",m:"Atap",s:[{c:"سَ",d:["ص"]},{c:"قْ",d:["ك"]},{c:"فٌ",d:["فٍ"]}]},{t:"بِلَاطٌ",m:"Lantai",s:[{c:"بِ",d:["بَ"]},{c:"لَ",d:["لِ"]},{c:"ا",d:[]},{c:"طٌ",d:["ت"]}]},{t:"سُورٌ",m:"Pagar",s:[{c:"سُ",d:["ش"]},{c:"و",d:[]},{c:"رٌ",d:["رٍ"]}]},{t:"جِدَارٌ",m:"Dinding",s:[{c:"جِ",d:["ح"]},{c:"دَ",d:["ذ"]},{c:"ا",d:[]},{c:"رٌ",d:["رٍ"]}]},{t:"سُلَّمٌ",m:"Tangga",s:[{c:"سُ",d:["ص"]},{c:"لَّ",d:["لَ"]},{c:"مٌ",d:["ن"]}]},{t:"مَطْبَخٌ",m:"Dapur",s:[{c:"مَ",d:["مِ"]},{c:"طْ",d:["ت"]},{c:"بَ",d:["بِ"]},{c:"خٌ",d:["ح"]}]},{t:"غُرْفَةٌ",m:"Kamar",s:[{c:"غُ",d:["ع"]},{c:"رْ",d:["رَ"]},{c:"فَ",d:["فِ"]},{c:"ةٌ",d:["ت"]}]}],
-            "ISI RUMAH": [{t:"مَكْتَبٌ",m:"Meja",s:[{c:"مَ",d:["مِ"]},{c:"كْ",d:["ق"]},{c:"تَ",d:["ط"]},{c:"بٌ",d:["بٍ"]}]},{t:"كُرْسِيٌّ",m:"Kursi",s:[{c:"كُ",d:["ق"]},{c:"رْ",d:["رَ"]},{c:"سِ",d:["ش"]},{c:"يٌّ",d:["ي"]}]},{t:"خِزَانَةٌ",m:"Lemari",s:[{c:"خِ",d:["ح"]},{c:"زَ",d:["ذ"]},{c:"ا",d:[]},{c:"نَ",d:["م"]},{c:"ةٌ",d:["ت"]}]},{t:"رَفٌّ",m:"Rak",s:[{c:"رَ",d:["ز"]},{c:"فٌّ",d:["ف"]}]},{t:"سَرِيرٌ",m:"Ranjang",s:[{c:"سَ",d:["ص"]},{c:"رِ",d:["رَ"]},{c:"ي",d:[]},{c:"رٌ",d:["رٍ"]}]},{t:"وِسَادَةٌ",m:"Bantal",s:[{c:"وِ",d:["وَ"]},{c:"سَ",d:["ص"]},{c:"ا",d:[]},{c:"دَ",d:["ذ"]},{c:"ةٌ",d:["ت"]}]},{t:"مِكْنَسَةٌ",m:"Sapu",s:[{c:"مِ",d:["مَ"]},{c:"كْ",d:["ق"]},{c:"نَ",d:["م"]},{c:"سَ",d:["ش"]},{c:"ةٌ",d:["ت"]}]},{t:"مَزْبَلَةٌ",m:"Tempat sampah",s:[{c:"مَ",d:["ن"]},{c:"زْ",d:["ذ"]},{c:"بَ",d:["بِ"]},{c:"لَ",d:["لِ"]},{c:"ةٌ",d:["ت"]}]},{t:"مِرْآةٌ",m:"Cermin",s:[{c:"مِ",d:["مَ"]},{c:"رْ",d:["رَ"]},{c:"آ",d:["ا"]},{c:"ةٌ",d:["ت"]}]},{t:"مُشْطٌ",m:"Sisir",s:[{c:"مُ",d:["مَ"]},{c:"شْ",d:["س"]},{c:"طٌ",d:["ت"]}]}],
-            "TEMPAT UMUM": [{t:"دُكَّانٌ",m:"Toko",s:[{c:"دُ",d:["ذ"]},{c:"كَّ",d:["ق"]},{c:"ا",d:[]},{c:"نٌ",d:["نٍ"]}]},{t:"مَسْجِدٌ",m:"Masjid",s:[{c:"مَ",d:["مِ"]},{c:"سْ",d:["ص"]},{c:"جِ",d:["ح"]},{c:"دٌ",d:["ذ"]}]},{t:"مُسْتَشْفًى",m:"Rumah sakit",s:[{c:"مُ",d:["مَ"]},{c:"سْ",d:["ص"]},{c:"تَ",d:["ط"]},{c:"شْ",d:["س"]},{c:"فً",d:["فَ"]},{c:"ى",d:[]}]},{t:"صَيْدَلِيَّةٌ",m:"Apotek",s:[{c:"صَ",d:["س"]},{c:"يْ",d:["ي"]},{c:"دَ",d:["ذ"]},{c:"لِ",d:["لَ"]},{c:"يَّ",d:["ي"]},{c:"ةٌ",d:["ت"]}]},{t:"مَطَارٌ",m:"Bandara",s:[{c:"مَ",d:["ن"]},{c:"طَ",d:["ت"]},{c:"ا",d:[]},{c:"رٌ",d:["رٍ"]}]},{t:"مِينَاءٌ",m:"Pelabuhan",s:[{c:"مِ",d:["مَ"]},{c:"ي",d:[]},{c:"نَ",d:["م"]},{c:"ا",d:[]},{c:"ءٌ",d:["ء"]}]},{t:"جَامِعَةٌ",m:"Universitas",s:[{c:"جَ",d:["ح"]},{c:"ا",d:[]},{c:"مِ",d:["مَ"]},{c:"عَ",d:["غ"]},{c:"ةٌ",d:["ت"]}]},{t:"مُتْحَفٌ",m:"Museum",s:[{c:"مُ",d:["مَ"]},{c:"تْ",d:["ط"]},{c:"حَ",d:["خ"]},{c:"فٌ",d:["فٍ"]}]},{t:"مَطْعَمٌ",m:"Restoran",s:[{c:"مَ",d:["ن"]},{c:"طْ",d:["ت"]},{c:"عَ",d:["غ"]},{c:"مٌ",d:["ن"]}]},{t:"فُنْدُقٌ",m:"Hotel",s:[{c:"فُ",d:["فَ"]},{c:"نْ",d:["م"]},{c:"دُ",d:["ذ"]},{c:"قٌ",d:["ك"]}]}],
-            "PROFESI (LK)": [{t:"مُدِيرٌ",m:"Kepala sekolah",s:[{c:"مُ",d:["مَ"]},{c:"دِ",d:["ذ"]},{c:"ي",d:[]},{c:"رٌ",d:["رٍ"]}]},{t:"أَسْتَاذٌ",m:"Ustaz",s:[{c:"أَ",d:["ا"]},{c:"سْ",d:["ص"]},{c:"تَ",d:["ط"]},{c:"ا",d:[]},{c:"ذٌ",d:["ز"]}]},{t:"مُدَرِّسٌ",m:"Guru",s:[{c:"مُ",d:["مَ"]},{c:"دَ",d:["ذ"]},{c:"رِّ",d:["رِ"]},{c:"سٌ",d:["ص"]}]},{t:"طَبِيبٌ",m:"Dokter",s:[{c:"طَ",d:["ت"]},{c:"بِ",d:["بَ"]},{c:"ي",d:[]},{c:"بٌ",d:["بٍ"]}]},{t:"فَلَّاحٌ",m:"Petani",s:[{c:"فَ",d:["ق"]},{c:"لَّ",d:["لَ"]},{c:"ا",d:[]},{c:"حٌ",d:["خ"]}]},{t:"تَاجِرٌ",m:"Pedagang",s:[{c:"تَ",d:["ط"]},{c:"ا",d:[]},{c:"جِ",d:["ح"]},{c:"رٌ",d:["رٍ"]}]},{t:"طَالِبٌ",m:"Pelajar",s:[{c:"طَ",d:["ت"]},{c:"ا",d:[]},{c:"لِ",d:["لَ"]},{c:"بٌ",d:["بٍ"]}]},{t:"شُرْطِيٌّ",m:"Polisi",s:[{c:"شُ",d:["س"]},{c:"رْ",d:["رَ"]},{c:"طِ",d:["ت"]},{c:"يٌّ",d:["ي"]}]},{t:"مُدَرِّبٌ",m:"Pelatih",s:[{c:"مُ",d:["مَ"]},{c:"دَ",d:["ذ"]},{c:"رِّ",d:["رِ"]},{c:"بٌ",d:["بٍ"]}]},{t:"مَوَظَّفٌ",m:"Pegawai",s:[{c:"مَ",d:["ن"]},{c:"وَ",d:["و"]},{c:"ظَّ",d:["ض"]},{c:"فٌ",d:["فٍ"]}]}],
-            "PROFESI (PR)": [{t:"مُدِيرَةٌ",m:"Kepala sekolah (Pr)",s:[{c:"مُ",d:["مَ"]},{c:"دِ",d:["ذ"]},{c:"ي",d:[]},{c:"رَ",d:["رِ"]},{c:"ةٌ",d:["ت"]}]},{t:"أُسْتَاذَةٌ",m:"Ustazah",s:[{c:"أُ",d:["ا"]},{c:"سْ",d:["ص"]},{c:"تَ",d:["ط"]},{c:"ا",d:[]},{c:"ذَ",d:["ز"]},{c:"ةٌ",d:["ت"]}]},{t:"مُدَرِّسَةٌ",m:"Guru (Pr)",s:[{c:"مُ",d:["مَ"]},{c:"دَ",d:["ذ"]},{c:"رِّ",d:["رِ"]},{c:"سَ",d:["ص"]},{c:"ةٌ",d:["ت"]}]},{t:"طَبِيبَةٌ",m:"Dokter (Pr)",s:[{c:"طَ",d:["ت"]},{c:"بِ",d:["بَ"]},{c:"ي",d:[]},{c:"بَ",d:["بِ"]},{c:"ةٌ",d:["ت"]}]},{t:"فَلَّاحَةٌ",m:"Petani (Pr)",s:[{c:"فَ",d:["ق"]},{c:"لَّ",d:["لَ"]},{c:"ا",d:[]},{c:"حَ",d:["خ"]},{c:"ةٌ",d:["ت"]}]},{t:"تَاجِرَةٌ",m:"Pedagang (Pr)",s:[{c:"تَ",d:["ط"]},{c:"ا",d:[]},{c:"جِ",d:["ح"]},{c:"رَ",d:["رِ"]},{c:"ةٌ",d:["ت"]}]},{t:"طَالِبَةٌ",m:"Pelajar (Pr)",s:[{c:"طَ",d:["ت"]},{c:"ا",d:[]},{c:"لِ",d:["لَ"]},{c:"بَ",d:["بِ"]},{c:"ةٌ",d:["ت"]}]},{t:"شُرْطِيَّةٌ",m:"Polisi (Pr)",s:[{c:"شُ",d:["س"]},{c:"رْ",d:["رَ"]},{c:"طِ",d:["ت"]},{c:"يَّ",d:["ي"]},{c:"ةٌ",d:["ت"]}]},{t:"مُدَرِّبَةٌ",m:"Pelatih (Pr)",s:[{c:"مُ",d:["مَ"]},{c:"دَ",d:["ذ"]},{c:"رِّ",d:["رِ"]},{c:"بَ",d:["بِ"]},{c:"ةٌ",d:["ت"]}]},{t:"مُوَظَّفَةٌ",m:"Pegawai (Pr)",s:[{c:"مُ",d:["مَ"]},{c:"وَ",d:["و"]},{c:"ظَّ",d:["ض"]},{c:"فَ",d:["فِ"]},{c:"ةٌ",d:["ت"]}]}],
-            "KELUARGA": [{t:"أَبٌ",m:"Bapak",s:[{c:"أَ",d:["ا"]},{c:"بٌ",d:["بٍ"]}]},{t:"أُمٌّ",m:"Ibu",s:[{c:"أُ",d:["ا"]},{c:"مٌّ",d:["م"]}]},{t:"وَلَدٌ",m:"Anak laki-laki",s:[{c:"وَ",d:["و"]},{c:"لَ",d:["لِ"]},{c:"دٌ",d:["ذ"]}]},{t:"بِنْتٌ",m:"Anak Perempuan",s:[{c:"بِ",d:["بَ"]},{c:"نْ",d:["م"]},{c:"تٌ",d:["ط"]}]},{t:"جَدٌّ",m:"Kakek",s:[{c:"جَ",d:["ح"]},{c:"دٌّ",d:["د"]}]},{t:"جَدَّةٌ",m:"Nenek",s:[{c:"جَ",d:["ح"]},{c:"دَّ",d:["د"]},{c:"ةٌ",d:["ت"]}]},{t:"رَجُلٌ",m:"Laki-laki",s:[{c:"رَ",d:["ز"]},{c:"جُ",d:["ح"]},{c:"لٌ",d:["لٍ"]}]},{t:"مَرْأَةٌ",m:"Perempuan",s:[{c:"مَ",d:["ن"]},{c:"رْ",d:["رَ"]},{c:"أَ",d:["ء"]},{c:"ةٌ",d:["ت"]}]},{t:"فَتًى",m:"Pemuda",s:[{c:"فَ",d:["ق"]},{c:"تً",d:["ط"]},{c:"ى",d:[]}]},{t:"فَتَاةٌ",m:"Pemudi",s:[{c:"فَ",d:["ق"]},{c:"تَ",d:["ط"]},{c:"ا",d:[]},{c:"ةٌ",d:["ت"]}]}],
-            "MAKANAN": [{t:"قَهْوَةٌ",m:"Kopi",s:[{c:"قَ",d:["ك"]},{c:"هْ",d:["ح"]},{c:"وَ",d:["و"]},{c:"ةٌ",d:["ت"]}]},{t:"شَايٌ",m:"Teh",s:[{c:"شَ",d:["س"]},{c:"ا",d:[]},{c:"يٌ",d:["ي"]}]},{t:"لَبَنٌ",m:"Susu",s:[{c:"لَ",d:["لِ"]},{c:"بَ",d:["بِ"]},{c:"نٌ",d:["نٍ"]}]},{t:"مَاءٌ",m:"Air",s:[{c:"مَ",d:["ن"]},{c:"ا",d:[]},{c:"ءٌ",d:["ء"]}]},{t:"لَحْمٌ",m:"Daging",s:[{c:"لَ",d:["لِ"]},{c:"حْ",d:["خ"]},{c:"مٌ",d:["ن"]}]},{t:"بَيْضَةٌ",m:"Telur",s:[{c:"بَ",d:["ت"]},{c:"يْ",d:["ي"]},{c:"ضَ",d:["ظ"]},{c:"ةٌ",d:["ت"]}]},{t:"خُبْزٌ",m:"Roti",s:[{c:"خُ",d:["ح"]},{c:"بْ",d:["بَ"]},{c:"زٌ",d:["ذ"]}]},{t:"جُبْنٌ",m:"Keju",s:[{c:"جُ",d:["ح"]},{c:"بْ",d:["بَ"]},{c:"نٌ",d:["نٍ"]}]},{t:"رُزٌّ",m:"Nasi",s:[{c:"رُ",d:["ز"]},{c:"زٌّ",d:["ز"]}]},{t:"ذُرَةٌ",m:"Jagung",s:[{c:"ذُ",d:["ز"]},{c:"رَ",d:["رِ"]},{c:"ةٌ",d:["ت"]}]}],
-            "BUAH": [{t:"تَمْرٌ",m:"Kurma",s:[{c:"تَ",d:["ط"]},{c:"مْ",d:["ن"]},{c:"رٌ",d:["رٍ"]}]},{t:"مَوْزٌ",m:"Pisang",s:[{c:"مَ",d:["ن"]},{c:"وْ",d:["و"]},{c:"زٌ",d:["ذ"]}]},{t:"بَابَايَا",m:"Pepaya",s:[{c:"بَ",d:["ت"]},{c:"ا",d:[]},{c:"بَ",d:["ت"]},{c:"ا",d:[]},{c:"يَ",d:["ي"]},{c:"ا",d:[]}]},{t:"تُفَّاحٌ",m:"Apel",s:[{c:"تُ",d:["ط"]},{c:"فَّ",d:["فَ"]},{c:"ا",d:[]},{c:"حٌ",d:["خ"]}]},{t:"بُرْتُقَالٌ",m:"Jeruk",s:[{c:"بُ",d:["بَ"]},{c:"رْ",d:["رَ"]},{c:"تُ",d:["ط"]},{c:"قَ",d:["ك"]},{c:"ا",d:[]},{c:"لٌ",d:["لٍ"]}]},{t:"بِطِّيخٌ",m:"Semangka",s:[{c:"بِ",d:["بَ"]},{c:"طِّ",d:["ت"]},{c:"ي",d:[]},{c:"خٌ",d:["ح"]}]},{t:"عِنَبٌ",m:"Anggur",s:[{c:"عِ",d:["غ"]},{c:"نَ",d:["م"]},{c:"بٌ",d:["بٍ"]}]},{t:"لَيْمُونٌ",m:"Lemon",s:[{c:"لَ",d:["لِ"]},{c:"يْ",d:["ي"]},{c:"مُ",d:["مَ"]},{c:"و",d:[]},{c:"نٌ",d:["نٍ"]}]},{t:"جَوَّافَةٌ",m:"Jambu",s:[{c:"جَ",d:["ح"]},{c:"وَّ",d:["و"]},{c:"ا",d:[]},{c:"فَ",d:["فِ"]},{c:"ةٌ",d:["ت"]}]},{t:"رُمَّانٌ",m:"Delima",s:[{c:"رُ",d:["ز"]},{c:"مَّ",d:["مَ"]},{c:"ا",d:[]},{c:"نٌ",d:["نٍ"]}]}],
-            "DAPUR": [{t:"صَحْنٌ",m:"Piring",s:[{c:"صَ",d:["س"]},{c:"حْ",d:["خ"]},{c:"نٌ",d:["نٍ"]}]},{t:"كُوبٌ",m:"Gelas",s:[{c:"كُ",d:["ق"]},{c:"و",d:[]},{c:"بٌ",d:["بٍ"]}]},{t:"مِلْعَقَةٌ",m:"Sendok",s:[{c:"مِ",d:["مَ"]},{c:"لْ",d:["لَ"]},{c:"عَ",d:["غ"]},{c:"قَ",d:["ك"]},{c:"ةٌ",d:["ت"]}]},{t:"شَوْكَةٌ",m:"Garpu",s:[{c:"شَ",d:["س"]},{c:"وْ",d:["و"]},{c:"كَ",d:["ق"]},{c:"ةٌ",d:["ت"]}]},{t:"سِكِّينٌ",m:"Pisau",s:[{c:"سِ",d:["ص"]},{c:"كِّ",d:["ك"]},{c:"ي",d:[]},{c:"نٌ",d:["نٍ"]}]},{t:"فِنْجَانٌ",m:"Cangkir",s:[{c:"فِ",d:["فَ"]},{c:"نْ",d:["م"]},{c:"جَ",d:["ح"]},{c:"ا",d:[]},{c:"نٌ",d:["نٍ"]}]},{t:"قِدْرٌ",m:"Panci",s:[{c:"قِ",d:["ك"]},{c:"دْ",d:["ذ"]},{c:"رٌ",d:["رٍ"]}]},{t:"مِقْلَاةٌ",m:"Wajan",s:[{c:"مِ",d:["مَ"]},{c:"قْ",d:["ك"]},{c:"لَ",d:["لِ"]},{c:"ا",d:[]},{c:"ةٌ",d:["ت"]}]},{t:"مِخْبَصَةٌ",m:"Sudip",s:[{c:"مِ",d:["مَ"]},{c:"خْ",d:["ح"]},{c:"بَ",d:["بِ"]},{c:"صَ",d:["س"]},{c:"ةٌ",d:["ت"]}]},{t:"مَوْقِفٌ",m:"Kompor",s:[{c:"مَ",d:["ن"]},{c:"وْ",d:["و"]},{c:"قِ",d:["ك"]},{c:"دٌ",d:["ذ"]}]}],
-            "HEWAN": [{t:"أَسَدٌ",m:"Singa",s:[{c:"أَ",d:["ا"]},{c:"سَ",d:["ص"]},{c:"دٌ",d:["ذ"]}]},{t:"فِيلٌ",m:"Gajah",s:[{c:"فِ",d:["فَ"]},{c:"ي",d:[]},{c:"لٌ",d:["لٍ"]}]},{t:"نَمْلٌ",m:"Semut",s:[{c:"نَ",d:["م"]},{c:"مْ",d:["ن"]},{c:"لٌ",d:["لٍ"]}]},{t:"دِيكٌ",m:"Ayam jantan",s:[{c:"دِ",d:["ذ"]},{c:"ي",d:[]},{c:"كٌ",d:["ق"]}]},{t:"حِصَانٌ",m:"Kuda",s:[{c:"حِ",d:["خ"]},{c:"صَ",d:["س"]},{c:"ا",d:[]},{c:"نٌ",d:["نٍ"]}]},{t:"حِمَارٌ",m:"Keledai",s:[{c:"حِ",d:["خ"]},{c:"مَ",d:["مِ"]},{c:"ا",d:[]},{c:"رٌ",d:["رٍ"]}]},{t:"جَمَلٌ",m:"Unta",s:[{c:"جَ",d:["ح"]},{c:"مَ",d:["مِ"]},{c:"لٌ",d:["لٍ"]}]},{t:"قِطٌّ",m:"Kucing",s:[{c:"قِ",d:["ك"]},{c:"طٌّ",d:["ط"]}]},{t:"كَلْبٌ",m:"Anjing",s:[{c:"كَ",d:["ق"]},{c:"لْ",d:["لَ"]},{c:"بٌ",d:["بٍ"]}]},{t:"سَمَكٌ",m:"Ikan",s:[{c:"سَ",d:["ص"]},{c:"مَ",d:["مِ"]},{c:"كٌ",d:["ق"]}]}],
-            "KATA SIFAT 1": [{t:"جَمِيلٌ",m:"Bagus",s:[{c:"جَ",d:["ح"]},{c:"مِ",d:["مَ"]},{c:"ي",d:[]},{c:"لٌ",d:["لٍ"]}]},{t:"قَبِيحٌ",m:"Buruk",s:[{c:"قَ",d:["ك"]},{c:"بِ",d:["بَ"]},{c:"ي",d:[]},{c:"حٌ",d:["خ"]}]},{t:"وَاسِعٌ",m:"Luas",s:[{c:"وَ",d:["و"]},{c:"ا",d:[]},{c:"سِ",d:["ص"]},{c:"عٌ",d:["ع"]}]},{t:"ضَيِّقٌ",m:"Sempit",s:[{c:"ضَ",d:["ظ"]},{c:"يِّ",d:["ي"]},{c:"قٌ",d:["ك"]}]},{t:"نَظِيفٌ",m:"Bersih",s:[{c:"نَ",d:["م"]},{c:"ظِ",d:["ز"]},{c:"ي",d:[]},{c:"فٌ",d:["فٍ"]}]},{t:"وَسِخٌ",m:"Kotor",s:[{c:"وَ",d:["و"]},{c:"سِ",d:["ش"]},{c:"خٌ",d:["ح"]}]},{t:"جَدِيدٌ",m:"Baru",s:[{c:"جَ",d:["ح"]},{c:"دِ",d:["ذ"]},{c:"ي",d:[]},{c:"دٌ",d:["ذ"]}]},{t:"قَدِيمٌ",m:"Lama",s:[{c:"قَ",d:["ك"]},{c:"دِ",d:["ذ"]},{c:"ي",d:[]},{c:"مٌ",d:["ن"]}]},{t:"بَعِيدٌ",m:"Jauh",s:[{c:"بَ",d:["بِ"]},{c:"عِ",d:["غ"]},{c:"ي",d:[]},{c:"دٌ",d:["ذ"]}]},{t:"قَرِيبٌ",m:"Dekat",s:[{c:"قَ",d:["ك"]},{c:"رِ",d:["رَ"]},{c:"ي",d:[]},{c:"بٌ",d:["بٍ"]}]}],
-            "KATA SIFAT 2": [{t:"غَنِيٌّ",m:"Kaya",s:[{c:"غَ",d:["ع"]},{c:"نِ",d:["م"]},{c:"يٌّ",d:["ي"]}]},{t:"فَقِيرٌ",m:"Miskin",s:[{c:"فَ",d:["ق"]},{c:"قِ",d:["ك"]},{c:"ي",d:[]},{c:"رٌ",d:["رٍ"]}]},{t:"قَوِيٌّ",m:"Kuat",s:[{c:"قَ",d:["ك"]},{c:"وِ",d:["و"]},{c:"يٌّ",d:["ي"]}]},{t:"ضَعِيفٌ",m:"Lemah",s:[{c:"ضَ",d:["ظ"]},{c:"عِ",d:["غ"]},{c:"ي",d:[]},{c:"فٌ",d:["فٍ"]}]},{t:"سَمِينٌ",m:"Gemuk",s:[{c:"سَ",d:["ص"]},{c:"مِ",d:["مَ"]},{c:"ي",d:[]},{c:"نٌ",d:["نٍ"]}]},{t:"نَحِيفٌ",m:"Kurus",s:[{c:"نَ",d:["م"]},{c:"حِ",d:["خ"]},{c:"ي",d:[]},{c:"فٌ",d:["فٍ"]}]},{t:"مُجْتَهِدٌ",m:"Rajin",s:[{c:"مُ",d:["مَ"]},{c:"جْ",d:["ح"]},{c:"تَ",d:["ط"]},{c:"هِ",d:["هَ"]},{c:"دٌ",d:["ذ"]}]},{t:"كَسْلَانُ",m:"Malas",s:[{c:"كَ",d:["ق"]},{c:"سْ",d:["ص"]},{c:"لَ",d:["لِ"]},{c:"ا",d:[]},{c:"نُ",d:["ن"]}]},{t:"مَسْرُورٌ",m:"Senang",s:[{c:"مَ",d:["ن"]},{c:"سْ",d:["ش"]},{c:"رُ",d:["رِ"]},{c:"و",d:[]},{c:"رٌ",d:["رٍ"]}]},{t:"حَزِينٌ",m:"Sedih",s:[{c:"حَ",d:["خ"]},{c:"زِ",d:["ذ"]},{c:"ي",d:[]},{c:"نٌ",d:["نٍ"]}]}],
-            "KATA SIFAT 3": [{t:"مُبْتَلٌّ",m:"Basah",s:[{c:"مُ",d:["مَ"]},{c:"بْ",d:["بَ"]},{c:"تَ",d:["ط"]},{c:"لٌّ",d:["ل"]}]},{t:"جَافٌّ",m:"Kering",s:[{c:"جَ",d:["ح"]},{c:"ا",d:[]},{c:"فٌّ",d:["ف"]}]},{t:"مَفْتَوحٌ",m:"Terbuka",s:[{c:"مَ",d:["ن"]},{c:"فْ",d:["ق"]},{c:"تَ",d:["ط"]},{c:"و",d:[]},{c:"حٌ",d:["خ"]}]},{t:"مُغْلَقٌ",m:"Tertutup",s:[{c:"مُ",d:["مَ"]},{c:"غْ",d:["ع"]},{c:"لَ",d:["لِ"]},{c:"قٌ",d:["ك"]}]},{t:"ثَقِيلٌ",m:"Berat",s:[{c:"ثَ",d:["ش"]},{c:"قِ",d:["ك"]},{c:"ي",d:[]},{c:"لٌ",d:["لٍ"]}]},{t:"خَفِيفٌ",m:"Ringan",s:[{c:"خَ",d:["ح"]},{c:"فِ",d:["فَ"]},{c:"ي",d:[]},{c:"فٌ",d:["فٍ"]}]},{t:"سَهْلٌ",m:"Mudah",s:[{c:"سَ",d:["ص"]},{c:"هْ",d:["ح"]},{c:"لٌ",d:["لٍ"]}]},{t:"صَعْبٌ",m:"Sulit",s:[{c:"صَ",d:["س"]},{c:"عْ",d:["غ"]},{c:"بٌ",d:["بٍ"]}]},{t:"حُلْوٌ",m:"Manis",s:[{c:"حُ",d:["خ"]},{c:"لْ",d:["لَ"]},{c:"وٌ",d:["و"]}]},{t:"مُرٌّ",m:"Pahit",s:[{c:"مُ",d:["مَ"]},{c:"رٌّ",d:["ر"]}]}],
-            "KATA SIFAT 4": [{t:"كَرِيمٌ",m:"Dermawan",s:[{c:"كَ",d:["ق"]},{c:"رِ",d:["رَ"]},{c:"ي",d:[]},{c:"مٌ",d:["ن"]}]},{t:"بَخِيلٌ",m:"Pelit",s:[{c:"بَ",d:["ت"]},{c:"خِ",d:["ح"]},{c:"ي",d:[]},{c:"لٌ",d:["لٍ"]}]},{t:"شُجَاعٌ",m:"Pemberani",s:[{c:"شُ",d:["س"]},{c:"جَ",d:["ح"]},{c:"ا",d:[]},{c:"عٌ",d:["ع"]}]},{t:"خَائِفٌ",m:"Penakut",s:[{c:"خَ",d:["ح"]},{c:"ا",d:[]},{c:"ئِ",d:["ئ"]},{c:"فٌ",d:["فٍ"]}]},{t:"مُتَوَاضِعٌ",m:"Rendah hati",s:[{c:"مُ",d:["مَ"]},{c:"تَ",d:["ط"]},{c:"وَ",d:["و"]},{c:"ا",d:[]},{c:"ضِ",d:["ظ"]},{c:"عٌ",d:["غ"]}]},{t:"مُتَكَبِّرٌ",m:"Sombong",s:[{c:"مُ",d:["مَ"]},{c:"تَ",d:["ط"]},{c:"كَ",d:["ق"]},{c:"بِّ",d:["ب"]},{c:"رٌ",d:["رٍ"]}]},{t:"صَحِيحٌ",m:"Sehat",s:[{c:"صَ",d:["س"]},{c:"حِ",d:["خ"]},{c:"ي",d:[]},{c:"حٌ",d:["خ"]}]},{t:"مَرِيضٌ",m:"Sakit",s:[{c:"مَ",d:["ن"]},{c:"رِ",d:["رَ"]},{c:"ي",d:[]},{c:"ضٌ",d:["ظ"]}]},{t:"أَمِينٌ",m:"Jujur",s:[{c:"أَ",d:["ا"]},{c:"مِ",d:["مَ"]},{c:"ي",d:[]},{c:"نٌ",d:["نٍ"]}]},{t:"كَاذِبٌ",m:"Bohong",s:[{c:"كَ",d:["ق"]},{c:"ا",d:[]},{c:"ذِ",d:["ز"]},{c:"بٌ",d:["بٍ"]}]}],
-            "WARNA": [{t:"أَسْوَدُ",m:"Hitam",s:[{c:"أَ",d:["ا"]},{c:"سْ",d:["ص"]},{c:"وَ",d:["و"]},{c:"دُ",d:["ذ"]}]},{t:"أَبْيَضُ",m:"Putih",s:[{c:"أَ",d:["ا"]},{c:"بْ",d:["ت"]},{c:"يَ",d:["ي"]},{c:"ضُ",d:["د"]}]},{t:"أَحْمَرُ",m:"Merah",s:[{c:"أَ",d:["ا"]},{c:"حْ",d:["خ"]},{c:"مَ",d:["ن"]},{c:"رُ",d:["رٍ"]}]},{t:"أَصْفَرُ",m:"Kuning",s:[{c:"أَ",d:["ا"]},{c:"صْ",d:["س"]},{c:"فَ",d:["فِ"]},{c:"رُ",d:["رٍ"]}]},{t:"أَخْضَرُ",m:"Hijau",s:[{c:"أَ",d:["ا"]},{c:"خْ",d:["ح"]},{c:"ضَ",d:["ظ"]},{c:"رُ",d:["رٍ"]}]},{t:"أَزْرَقُ",m:"Biru",s:[{c:"أَ",d:["ا"]},{c:"زْ",d:["ذ"]},{c:"رَ",d:["رِ"]},{c:"قُ",d:["ك"]}]},{t:"أَسْمَرُ",m:"Coklat",s:[{c:"أَ",d:["ا"]},{c:"سْ",d:["ش"]},{c:"مَ",d:["ن"]},{c:"رُ",d:["رٍ"]}]},{t:"أَرْمَدُ",m:"Abu-abu",s:[{c:"أَ",d:["ا"]},{c:"رْ",d:["رَ"]},{c:"مَ",d:["ن"]},{c:"دُ",d:["ذ"]}]},{t:"قَرَنْفُلِيٌّ",m:"Pink",s:[{c:"قَ",d:["ك"]},{c:"رَ",d:["رِ"]},{c:"نْ",d:["م"]},{c:"فُ",d:["فَ"]},{c:"لِ",d:["لَ"]},{c:"يٌّ",d:["ي"]}]},{t:"بَنَفْسَجِيٌّ",m:"Ungu",s:[{c:"بَ",d:["ت"]},{c:"نَ",d:["م"]},{c:"فْ",d:["فَ"]},{c:"سَ",d:["ش"]},{c:"جِ",d:["ح"]},{c:"يٌّ",d:["ي"]}]}]
+        // --- KONFIGURASI GOOGLE SHEET ---
+        const GOOGLE_SCRIPT_URL = ""; 
+
+        // --- ROBUST AUDIO ENGINE ---
+        let audioCtx;
+        function initAudioContext() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            playTone(0, 0.1); 
+            showScreen('mode-screen');
+        }
+
+        function playTone(freq, type = 'sine') {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+        }
+
+        const sounds = {
+            pop: new Audio("https://actions.google.com/sounds/v1/cartoon/pop_egg.ogg"),
+            win: new Audio("https://actions.google.com/sounds/v1/cartoon/magic_chime.ogg"),
+            lose: new Audio("https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg")
         };
 
-        const extraChars = "ابتثجحخدذرزسشصضطظعغفقكلمنهوي";
+        function playSound(type) {
+            if (appState.sound === 'off') return;
+            
+            const sound = sounds[type];
+            if (sound) {
+                const clone = sound.cloneNode();
+                clone.play().catch(e => {
+                    if(type === 'pop') playTone(600, 'triangle');
+                    if(type === 'win') { playTone(500, 'sine'); setTimeout(()=>playTone(800, 'sine'), 100); setTimeout(()=>playTone(1000, 'sine'), 200); }
+                    if(type === 'lose') { playTone(300, 'sawtooth'); setTimeout(()=>playTone(200, 'sawtooth'), 200); }
+                });
+            }
+        }
+        
+        function testSound(e) {
+            e.stopPropagation();
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            audioCtx.resume().then(() => { playSound('win'); showToast("🔊 Tes Suara"); });
+        }
 
-        let state = {
-            numPlayers: 1,
-            playlist: [],
-            activeThemeName: "",
-            timeLimit: 60,
-            currentTime: 60,
-            timerInterval: null,
-            players: [ 
-                { name: "", score: 0, idx: 0, level: 1 }, 
-                { name: "", score: 0, idx: 0, level: 1 } 
-            ]
+        // --- DATA INPUT ---
+        const rawVocabData = [
+            { theme: "Perlengkapan Sekolah", items: [["قَلَنْسُوَةٌ", "Peci"], ["حِجَابٌ", "Jilbab"], ["قَمِيصٌ", "Kemeja"], ["حَقِيبَةٌ", "Tas"], ["حِذَاءٌ", "Sepatu"], ["جَوْرَبٌ", "Kaos kaki"], ["بَنْطَلُونٌ", "Celana panjang"], ["تَنُّورَةٌ", "Rok"], ["سَاعَةٌ", "Jam"], ["قُبَّعَةٌ", "Topi"]] },
+            { theme: "Perlengkapan Pribadi", items: [["سِرْوَالٌ", "Celana pendek"], ["إِزَارٌ", "Sarung"], ["مُشَمَّعٌ", "Jas hujan"], ["مِظَلَّةٌ", "Payung"], ["عُلْبَةٌ", "Kotak makan"], ["زُجَاجَةٌ", "Botol minum"], ["حِزَامٌ", "Ikat pinggang"], ["مِنْدِيلٌ", "Saputangan"], ["نَعْلٌ", "Sandal"]] },
+            { theme: "Alat Tulis Menulis", items: [["كِتَابٌ", "Buku cetak"], ["دَفْتَرٌ", "Buku tulis"], ["بَرَّايَةٌ", "Peraut"], ["مِسْطَرَةٌ", "Penggaris"], ["قَلَمٌ", "Pulpen"], ["مِرْسَمٌ", "Pensil"], ["مُزِيلٌ", "Tipe-X"], ["مِمْحَاةٌ", "Penghapus"], ["حِبْرٌ", "Tinta"], ["مِقْلَمَةٌ", "Tempat Pulpen"]] },
+            { theme: "Kantor & Sekolah", items: [["شَهَادَةٌ", "Ijazah"], ["خَرِيطَةٌ", "Peta"], ["سَبُّورَةٌ", "Papan tulis"], ["قِرْطَاسٌ", "Kertas"], ["كَشْفُ حُضُورٍ", "Daftar hadir"], ["غِرَاءٌ", "Lem"], ["غِلَافٌ", "Amplop"], ["تَقْوِيمٌ", "Kalender"], ["رِسَالَةٌ", "Surat"], ["مَلَفٌ", "Map"]] },
+            { theme: "Tempat di Sekolah", items: [["مَدْرَسَةٌ", "Sekolah"], ["فَصْلٌ", "Kelas"], ["مَكْتَبَةٌ", "Perpustakaan"], ["مَعْمَلٌ", "Laboratorium"], ["مُصَلَّى", "Musala"], ["سَاحَةٌ", "Pekarangan"], ["مَقْصَفٌ", "Kantin"], ["مَوْقِفٌ", "Parkiran"], ["حَمَّامٌ", "Kamar mandi"], ["مِرْحَاضٌ", "WC"]] },
+            { theme: "Rumah", items: [["بَيْتٌ", "Rumah"], ["بَابٌ", "Pintu"], ["نَافِذَةٌ", "Jendela"], ["سَقْفٌ", "Atap"], ["بِلَاطٌ", "Lantai"], ["سُورٌ", "Pagar"], ["جِدَارٌ", "Dinding"], ["سُلَّمٌ", "Tangga"], ["مَطْبَخٌ", "Dapur"], ["غُرْفَةٌ", "Kamar"]] },
+            { theme: "Perlengkapan Rumah", items: [["مَكْتَبٌ", "Meja"], ["كُرْسِيٌّ", "Kursi"], ["خِزَانَةٌ", "Lemari"], ["رَفٌّ", "Rak"], ["سَرِيرٌ", "Ranjang"], ["وِسَادَةٌ", "Bantal"], ["مِكْنَسَةٌ", "Sapu"], ["مَزْبَلَةٌ", "Tempat sampah"], ["مِرْآةٌ", "Cermin"], ["مُشْطٌ", "Sisir"]] },
+            { theme: "Tempat & Lokasi", items: [["دُكَّانٌ", "Toko"], ["مَسْجِدٌ", "Masjid"], ["مُسْتَشْفًى", "Rumah sakit"], ["صَيْدَلِيَّةٌ", "Apotek"], ["مَطَارٌ", "Bandara"], ["مِينَاءٌ", "Pelabuhan"], ["جَامِعَةٌ", "Universitas"], ["مُتْحَفٌ", "Museum"], ["مَطْعَمٌ", "Restoran"], ["فُنْدُقٌ", "Hotel"]] },
+            { theme: "Profesi (Laki-laki)", items: [["مُدِيرٌ", "Kepala sekolah"], ["أُسْتَاذٌ", "Ustaz"], ["مُدَرِّسٌ", "Guru"], ["طَبِيبٌ", "Dokter"], ["فَلَّاحٌ", "Petani"], ["تَاجِرٌ", "Pedagang"], ["طَالِبٌ", "Pelajar"], ["شُرْطِيٌّ", "Polisi"], ["مُدَرِّبٌ", "Pelatih"], ["مَوَظَّفٌ", "Pegawai"]] },
+            { theme: "Profesi (Perempuan)", items: [["مُدِيرَةٌ", "Kepala sekolah (Pr)"], ["أَسْتَاذَةٌ", "Ustazah"], ["مُدَرِّسَةٌ", "Guru (Pr)"], ["طَبِيبَةٌ", "Dokter (Pr)"], ["فَلَّاحَةٌ", "Petani (Pr)"], ["تَاجِرَةٌ", "Pedagang (Pr)"], ["طَالِبَةٌ", "Pelajar (Pr)"], ["شُرْطِيَّةٌ", "Polisi (Pr)"], ["مُدَرِّبَةٌ", "Pelatih (Pr)"], ["مُوَظَّفَةٌ", "Pegawai (Pr)"]] },
+            { theme: "Keluarga", items: [["أَبٌ", "Bapak"], ["أُمٌّ", "Ibu"], ["وَلَدٌ", "Anak laki-laki"], ["بِنْتٌ", "Anak Perempuan"], ["جَدٌّ", "Kakek"], ["جَدَّةٌ", "Nenek"], ["رَجُلٌ", "Laki-laki"], ["مَرْأَةٌ", "Perempuan"], ["فَتًى", "Pemuda"], ["فَتَاةٌ", "Pemudi"]] },
+            { theme: "Makanan & Minuman", items: [["قَهْوَةٌ", "Kopi"], ["شَايٌ", "Teh"], ["لَبَنٌ", "Susu"], ["مَاءٌ", "Air"], ["لَحْمٌ", "Daging"], ["بَيْضَةٌ", "Telur"], ["خُبْزٌ", "Roti"], ["جُبْنٌ", "Keju"], ["رُزٌّ", "Nasi"], ["ذُرَةٌ", "Jagung"]] },
+            { theme: "Buah", items: [["تَمْرٌ", "Kurma"], ["مَوْزٌ", "Pisang"], ["بَابَايَا", "Pepaya"], ["تُفَّاحٌ", "Apel"], ["بُرْتُقَالٌ", "Jeruk"], ["بِطِّيخٌ", "Semangka"], ["عِنَبٌ", "Anggur"], ["لَيْمُونٌ", "Lemon"], ["جَوَّافَةٌ", "Jambu"], ["رُمَّانٌ", "Delima"]] },
+            { theme: "Alat Dapur", items: [["صَحْنٌ", "Piring"], ["كُوبٌ", "Gelas"], ["مِلْعَقَةٌ", "Sendok"], ["شَوْكَةٌ", "Garpu"], ["سِكِّينٌ", "Pisau"], ["فِنْجَانٌ", "Cangkir"], ["قِدْرٌ", "Panci"], ["مِقْلَاةٌ", "Wajan"], ["مِخْبَصَةٌ", "Sudip"], ["مِوْقِدٌ", "Kompor"]] },
+            { theme: "Hewan", items: [["أَسَدٌ", "Singa"], ["فِيلٌ", "Gajah"], ["نَمْلٌ", "Semut"], ["دِيكٌ", "Ayam jantan"], ["حِصَانٌ", "Kuda"], ["حِمَارٌ", "Keledai"], ["جَمَلٌ", "Unta"], ["قِطٌّ", "Kucing"], ["كَلْبٌ", "Anjing"], ["سَمَكٌ", "Ikan"]] },
+            { theme: "Kata Sifat 1", items: [["جَمِيلٌ", "Bagus"], ["قَبِيحٌ", "Buruk"], ["وَاسِعٌ", "Luas"], ["ضَيِّقٌ", "Sempit"], ["نَظِيفٌ", "Bersih"], ["وَسِخٌ", "Kotor"], ["جَدِيدٌ", "Baru"], ["قَدِيمٌ", "Tua"], ["بَعِيدٌ", "Jauh"], ["قَرِيبٌ", "Dekat"]] },
+            { theme: "Kata Sifat 2", items: [["غَنِيٌّ", "Kaya"], ["فَقِيرٌ", "Miskin"], ["قَوِيٌّ", "Kuat"], ["ضَعِيفٌ", "Lemah"], ["سَمِينٌ", "Gemuk"], ["نَحِيفٌ", "Kurus"], ["مُجْتَهِدٌ", "Rajin"], ["كَسْلَانُ", "Malas"], ["مِسْرُورٌ", "Senang"], ["حَزِينٌ", "Sedih"]] },
+            { theme: "Kata Sifat 3", items: [["مُبْتَلٌّ", "Basah"], ["جَافٌّ", "Kering"], ["مَفْتَوحٌ", "Terbuka"], ["مُغْلَقٌ", "Tertutup"], ["ثَقِيلٌ", "Berat"], ["خَفِيفٌ", "Ringan"], ["سَهْلٌ", "Mudah"], ["صَعِبٌ", "Sulit"], ["حُلْوٌ", "Manis"], ["مُرٌّ", "Pahit"]] },
+            { theme: "Kata Sifat 4", items: [["كَرِيمٌ", "Dermawan"], ["بَخِبلٌ", "Pelit"], ["شُجَاعٌ", "Pemberani"], ["خَائِفٌ", "Penakut"], ["مُتَوَاضِعٌ", "Rendah hati"], ["مُتَكَبِّرٌ", "Sombong"], ["صَحِيحٌ", "Sehat"], ["مَرِيضٌ", "Sakit"], ["أَمِينٌ", "Jujur"], ["كَاذِبٌ", "Bohong"]] },
+            { theme: "Warna", items: [["أَسْوَدُ", "Hitam"], ["أَبْيَضُ", "Putih"], ["أَحْمَرُ", "Merah"], ["أَصْفَرُ", "Kuning"], ["أَخْضَرُ", "Hijau"], ["أَزْرَقُ", "Biru"], ["أَسْمَرُ", "Coklat"], ["أَرْمَدُ", "Abu-abu"], ["قَرَنْفُلِيٌّ", "Pink"], ["بَنَفْسَجِيٌّ", "Ungu"]] }
+        ];
+
+        // Process Data
+        const vocabData = rawVocabData.map(theme => {
+            return {
+                theme: theme.theme,
+                items: theme.items.map(item => {
+                    const arab = item[0];
+                    const indo = item[1];
+                    let img;
+                    if (item.length > 2) img = item[2];
+                    else if (theme.theme.toLowerCase().includes("sifat")) img = "https://cdn-icons-png.flaticon.com/512/210/210545.png"; 
+                    else img = `img/${indo.toLowerCase().replace(/\s+/g, '').replace(/[\(\)]/g, '')}.png`;
+                    return [arab, indo, img];
+                })
+            };
+        });
+
+        // --- GLOBAL VARIABLES ---
+        let appState = { mode: 1, timeLimit: 120, sound: "on", appMode: "play", currentThemeIdx: 0, currentWordIdx: 0, timer: 0, interval: null, questionQueue: [], players: [ { name: "", score: 0, lives: 3, mistakes: 0, finished: false, currentWord: null }, { name: "", score: 0, lives: 3, mistakes: 0, finished: false, currentWord: null } ] };
+        let activeDrags = {};
+        let localHighScores = [];
+        const placeholderImg = "https://cdn-icons-png.flaticon.com/512/3330/3330314.png"; 
+
+        const arabicLetters = /[\u0621-\u064A]/;
+        const harakat = /[\u064B-\u065F\u0670\u0651\u0652]/;
+        
+        function parseArabicWord(word) {
+            let parts = []; let current = "";
+            for (let i = 0; i < word.length; i++) {
+                let char = word[i];
+                if (arabicLetters.test(char)) { if (current) parts.push(current); current = char; } 
+                else if (harakat.test(char)) { current += char; } 
+                else { current += char; }
+            }
+            if (current) parts.push(current);
+            return parts;
+        }
+
+        // --- INIT & NAVIGATION ---
+        window.onload = function() {
+            // Hapus timeout splash screen karena sekarang manual klik
+            renderThemeButtons();
+            loadScores(); 
+
+            // Global Click Sound
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('.btn-metallic, .level-card, .nav-btn, .icon-btn, .mode-btn')) playSound('pop');
+            });
+            // Typing Sound
+            document.addEventListener('input', function(e) {
+                if (e.target.tagName === 'INPUT' && e.target.type === 'text') playSound('pop');
+            });
+            // Check Buttons
+            document.getElementById('p1-check').addEventListener('pointerdown', function(e) { handleCheck(e, 1); });
+            document.getElementById('p2-check').addEventListener('pointerdown', function(e) { handleCheck(e, 2); });
         };
 
-        // MULTI-TOUCH TRACKER
-        const activeTouches = {};
-
-        // INIT
-        window.onload = function() { renderThemes(); };
-
-        function enterHome() {
-            document.getElementById('screen-splash').classList.add('hidden');
-            document.getElementById('screen-home').classList.remove('hidden');
+        function setAppMode(mode) {
+            appState.appMode = mode;
+            document.getElementById('btnPlayMode').className = mode === 'play' ? 'mode-btn active' : 'mode-btn';
+            document.getElementById('btnStudyMode').className = mode === 'study' ? 'mode-btn active' : 'mode-btn';
         }
 
-        function showScreen(id) {
-            const screens = ['screen-splash', 'screen-home', 'screen-input', 'screen-theme', 'screen-result'];
-            screens.forEach(sid => { const el = document.getElementById(sid); if(el) el.classList.add('hidden'); });
-            document.getElementById('game-ui').classList.add('hidden');
-            document.getElementById('game-container').classList.add('hidden');
-            const target = document.getElementById(id);
-            if(target) target.classList.remove('hidden');
-        }
-
-        function goToInput(n) {
-            state.numPlayers = n;
-            const c = document.getElementById('input-container');
-            c.innerHTML = '';
-            for(let i=0; i<n; i++) {
-                c.innerHTML += `<div class="w-full"><label class="block mb-2 text-emerald-200 font-bold">${n===1?'Nama Pemain':(i===0?'Pemain Kanan (1)':'Pemain Kiri (2)')}</label><input type="text" id="inp-p${i}" class="w-full px-5 py-4 rounded-xl text-slate-900 text-center font-bold text-xl outline-none focus:ring-4 focus:ring-yellow-400 shadow-lg" placeholder="Ketik nama..." autocomplete="off"></div>`;
-            }
-            showScreen('screen-input');
-        }
-
-        function validateToTheme() {
-            let valid = true;
-            for(let i=0; i<state.numPlayers; i++) {
-                const el = document.getElementById(`inp-p${i}`);
-                if(!el.value.trim()) { el.classList.add('bg-red-400'); valid=false; }
-                else { el.classList.remove('bg-red-400'); state.players[i].name = el.value.trim(); }
-            }
-            if(valid) { showScreen('screen-theme'); }
-        }
-
-        function renderThemes() {
-            const c = document.getElementById('theme-container');
-            c.innerHTML = '';
-            c.innerHTML += `
-                <button onclick="selectTheme('ALL')" class="bg-gradient-to-br from-purple-500 to-indigo-600 hover:scale-105 transform transition-all p-4 rounded-2xl shadow-lg flex flex-col items-center justify-center text-white border-b-4 border-indigo-800 active:border-b-0 active:translate-y-1 h-32">
-                    <span class="text-3xl mb-2">🎲</span>
-                    <span class="font-bold text-lg leading-none">CAMPURAN</span>
-                    <span class="text-xs text-purple-200 mt-1">Semua Topik</span>
-                </button>
-            `;
-            Object.keys(themesDB).forEach(key => {
-                let icon = "📚";
-                if(key.includes("PRIBADI") || key.includes("PAKAIAN")) icon = "👕";
-                if(key.includes("RUMAH") || key.includes("BAGIAN")) icon = "🏠";
-                if(key.includes("HEWAN")) icon = "🦁";
-                if(key.includes("BUAH") || key.includes("MAKANAN")) icon = "🍎";
-                if(key.includes("DAPUR")) icon = "🍳";
-                if(key.includes("PROFESI")) icon = "👨‍⚕️";
-                if(key.includes("KELUARGA")) icon = "👨‍👩‍👧";
-                if(key.includes("SIFAT")) icon = "✨";
-                if(key.includes("WARNA")) icon = "🎨";
-                if(key.includes("TEMPAT")) icon = "🕌";
-
-                c.innerHTML += `
-                    <button onclick="selectTheme('${key}')" class="bg-white hover:bg-emerald-50 hover:scale-105 transform transition-all p-4 rounded-2xl shadow-lg flex flex-col items-center justify-center text-slate-700 border-b-4 border-slate-300 active:border-b-0 active:translate-y-1 h-32">
-                        <span class="text-3xl mb-2">${icon}</span>
-                        <span class="font-bold text-sm md:text-base leading-tight text-center">${key}</span>
-                    </button>
-                `;
+        function renderThemeButtons() {
+            const grid = document.getElementById('levelGrid'); grid.innerHTML = "";
+            vocabData.forEach((theme, idx) => {
+                const btn = document.createElement('div'); btn.className = "level-card"; 
+                btn.onclick = () => handleThemeClick(idx);
+                const icon = ["📚","👕","✏️","🏫","🏡","🛋️","🏥","👷","🧕","👨‍👩‍👧","🍎","☕","🥄","🦁","🎨"][idx % 15] || "🌟";
+                btn.innerHTML = `<div style="font-size:2.5rem">${icon}</div><div class="level-title">Sesi ${idx+1}</div><div class="level-sub">${theme.theme}</div>`;
+                grid.appendChild(btn);
             });
         }
 
-        function selectTheme(key) {
-            state.activeThemeName = key === 'ALL' ? "CAMPURAN (SEMUA)" : key;
-            if(key === 'ALL') {
-                let allWords = [];
-                Object.values(themesDB).forEach(arr => allWords = allWords.concat(arr));
-                state.playlist = allWords.sort(() => Math.random() - 0.5);
+        function handleThemeClick(idx) {
+            if(appState.appMode === 'play') {
+                startGame(idx);
             } else {
-                state.playlist = [...themesDB[key]].sort(() => Math.random() - 0.5);
+                openVocabBank(idx);
             }
-            startGame();
         }
 
-        function startGame() {
-            showScreen('dummy'); 
-            document.getElementById('game-ui').classList.remove('hidden');
-            document.getElementById('game-ui').classList.add('flex');
-            document.getElementById('game-container').classList.remove('hidden');
-            document.getElementById('game-container').classList.add('flex');
-
-            state.currentTime = 60; 
-            state.players.forEach(p => { p.score = 0; p.idx = 0; p.level = 1; });
-
-            document.getElementById('name-p1').innerText = state.players[0].name;
-            document.getElementById('score-p1').innerText = "0";
-            document.getElementById('lvl-p1').innerText = "LV 1";
-            document.getElementById('lvl-p1').className = "bg-emerald-600 text-white text-[10px] px-2 rounded-full";
-
-            if(state.numPlayers === 2) {
-                document.getElementById('ui-p2').classList.remove('hidden');
-                document.getElementById('ui-p2').classList.add('flex');
-                document.getElementById('name-p2').innerText = state.players[1].name;
-                document.getElementById('score-p2').innerText = "0";
-                document.getElementById('lvl-p2').innerText = "LV 1";
-            }
-
-            const container = document.getElementById('game-container');
-            container.innerHTML = `<div class="${state.numPlayers===2?'':'hidden'} absolute left-1/2 top-24 bottom-4 w-1 border-r-2 border-dashed border-slate-300 -translate-x-1/2 z-0"></div>`;
+        function openVocabBank(idx) {
+            const data = vocabData[idx];
+            const grid = document.getElementById('vocabGrid');
+            grid.innerHTML = "";
+            document.getElementById('vocabTitle').innerText = data.theme;
             
-            for(let i=0; i<state.numPlayers; i++) { createBoard(i); loadWord(i); }
-            startTimer();
+            data.items.forEach(item => {
+                const card = document.createElement('div');
+                card.className = "vocab-card";
+                const imgUrl = item[2] || placeholderImg;
+                card.innerHTML = `
+                    <img src="${imgUrl}" onerror="this.src='${placeholderImg}'">
+                    <div class="vocab-arab">${item[0]}</div>
+                    <div class="vocab-indo">${item[1]}</div>
+                    <button class="vocab-play-btn" onclick="speakText('${item[0]}')">🔊</button>
+                `;
+                grid.appendChild(card);
+            });
+            showScreen('vocab-screen');
+        }
+
+        function speakText(text) {
+            const u = new SpeechSynthesisUtterance(text);
+            u.lang='ar-SA'; u.rate=0.8; window.speechSynthesis.speak(u);
+        }
+
+        function showScreen(id) { stopTimer(); document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+        function selectMode(m) {
+            appState.mode = m;
+            const container = document.getElementById('inputContainer'); container.innerHTML = '';
+            container.innerHTML += `<input type="text" id="name1" class="input-box" placeholder="Nama Pemain 1" oninput="playSound('pop')">`;
+            if(m === 2) {
+                container.innerHTML += `<input type="text" id="name2" class="input-box" placeholder="Nama Pemain 2" oninput="playSound('pop')">`;
+                document.getElementById('entryTitle').innerText = "Masukkan Nama Pemain";
+            } else { document.getElementById('entryTitle').innerText = "Siapa Namamu?"; }
+            showScreen('entry-screen');
+        }
+        function submitName() {
+            const n1 = document.getElementById('name1').value.trim();
+            const n2 = appState.mode===2 ? document.getElementById('name2').value.trim() : "-";
+            if(!n1 || (appState.mode===2 && !n2)) { showToast("⚠️ Isi semua nama!", "#c0392b"); return; }
+            appState.players[0].name = n1; appState.players[1].name = n2;
+            showScreen('level-screen');
+        }
+
+        // --- GAME LOGIC ---
+        function startGame(themeIdx) {
+            appState.currentThemeIdx = themeIdx;
+            appState.questionQueue = vocabData[themeIdx].items; 
+            appState.currentWordIdx = 0;
+            appState.players.forEach(p => { 
+                p.score=0; p.mistakes=0; p.wordIdx = 0; p.lives = 3; p.finished = false;
+            });
+            // Gunakan timeLimit dari settings
+            appState.timer = parseInt(appState.timeLimit);
+            document.getElementById('dispTimer').innerText = appState.timer;
+            loadPlayerQuestion(1);
+            if(appState.mode===2) { document.getElementById('p2-panel').style.display='flex'; loadPlayerQuestion(2); }
+            else { document.getElementById('p2-panel').style.display='none'; }
+            showScreen('game-screen');
+            startTimer(); 
+        }
+
+        function loadPlayerQuestion(pNum) {
+            const pIdx = pNum - 1; const player = appState.players[pIdx];
+            if (player.wordIdx >= appState.questionQueue.length) {
+                player.finished = true;
+                document.getElementById(`p${pNum}-overlay`).style.display = 'flex';
+                document.getElementById(`p${pNum}-overlay`).innerHTML = `<div>✅ SELESAI</div><div style="font-size:1rem; margin-top:10px;">Menunggu Waktu...</div>`;
+                return;
+            }
+            const raw = appState.questionQueue[player.wordIdx];
+            const wordArab = raw[0]; const wordArti = raw[1]; const wordImg = raw[2]; 
+            const segments = parseArabicWord(wordArab);
+            const structure = segments.map(seg => ({ base: seg[0], harakat: seg.substring(1), full: seg }));
+            let pool = structure.map((s, i) => ({ ...s, id: 'c'+i }));
+            const distractors = ["ب","ت","ث","ج","ح","خ","د","ر","س","ص","ط","ع","ف","ق","ك","ل","م","ن","ه","و","ي"];
+            for(let i=0; i<3; i++) {
+                const randChar = distractors[Math.floor(Math.random() * distractors.length)];
+                pool.push({ base: randChar, harakat: "َ", full: randChar+"َ", id: 'd'+i });
+            }
+            pool.sort(() => Math.random() - 0.5);
+            player.currentWord = { word: wordArab, meaning: wordArti, image: wordImg, structure: structure, pool: pool };
+            document.getElementById(`p${pNum}-round-disp`).innerText = `Soal ${player.wordIdx + 1}/${appState.questionQueue.length}`;
+            renderPlayerBoard(pNum, player.currentWord);
+        }
+
+        function renderPlayerBoard(pNum, lvl) {
+            document.getElementById(`p${pNum}-overlay`).style.display = 'none';
+            document.getElementById(`p${pNum}-name-disp`).innerText = appState.players[pNum-1].name;
+            document.getElementById(`p${pNum}-lives`).innerText = "❤️❤️❤️";
+            document.getElementById(`p${pNum}-score-disp`).innerText = appState.players[pNum-1].score;
+            document.getElementById(`p${pNum}-msg`).innerText = "";
+            const imgEl = document.getElementById(`p${pNum}-img`);
+            imgEl.src = lvl.image; imgEl.onerror = function() { this.src = placeholderImg; }; 
+            document.getElementById(`p${pNum}-check`).style.display = 'none';
+            document.getElementById(`p${pNum}-meaning`).innerText = lvl.meaning;
+            
+            const hintEl = document.getElementById(`p${pNum}-hint`);
+            // Check timeLimit for Hint Logic (>= 120 means Easy/Hint ON)
+            if (parseInt(appState.timeLimit) >= 120) { hintEl.innerText = lvl.word; hintEl.style.display = 'block'; }
+            else { hintEl.innerText = lvl.word; hintEl.style.display = 'none'; }
+            
+            const sArea = document.getElementById(`p${pNum}-slots`); sArea.innerHTML = '';
+            lvl.structure.forEach(() => { const s = document.createElement('div'); s.className = 'slot'; s.onclick = removeLetter; sArea.appendChild(s); });
+            const pArea = document.getElementById(`p${pNum}-pool`); pArea.innerHTML = '';
+            const myPool = JSON.parse(JSON.stringify(lvl.pool)).sort(()=>Math.random()-0.5);
+            myPool.forEach(item => {
+                const d = document.createElement('div'); d.className = 'letter-card';
+                d.textContent = item.full; d.id = `p${pNum}-${item.id}`;
+                d.dataset.full = item.full; d.dataset.base = item.base; d.dataset.harakat = item.harakat;
+                initTouchDrag(d); d.draggable = true;
+                d.ondragstart = (e) => { e.dataTransfer.setData("text", d.id); };
+                pArea.appendChild(d);
+            });
+            sArea.querySelectorAll('.slot').forEach(s => {
+                s.ondragover = e => e.preventDefault();
+                s.ondrop = (e) => { e.preventDefault(); if(s.children.length>0) return; const id=e.dataTransfer.getData("text"); if(id.startsWith(`p${pNum}`)) placeLetter(document.getElementById(id), s); };
+            });
+        }
+
+        const letterForms = { 'ك':{isolated:'ك',initial:'ﻛ',medial:'ﻜ',final:'ﻚ'}, 'ت':{isolated:'ت',initial:'ﺗ',medial:'ﺘ',final:'ﺖ'}, 'ا':{isolated:'ا',initial:'ا',medial:'ﺎ',final:'ﺎ'}, 'ب':{isolated:'ب',initial:'ﺑ',medial:'ﺒ',final:'ﺐ'}, 'ن':{isolated:'ن',initial:'ﻧ',medial:'ﻨ',final:'ﻦ'}, 'ي':{isolated:'ي',initial:'ﻳ',medial:'ﻴ',final:'ﻲ'}, 'ع':{isolated:'ع',initial:'ﻋ',medial:'ﻌ',final:'ﻊ'}, 'غ':{isolated:'غ',initial:'ﻏ',medial:'ﻐ',final:'ﻎ'}, 'ق':{isolated:'ق',initial:'ﻗ',medial:'ﻘ',final:'ﻖ'}, 'ل':{isolated:'ل',initial:'ﻟ',medial:'ﻠ',final:'ﻞ'}, 'م':{isolated:'م',initial:'ﻣ',medial:'ﻤ',final:'ﻢ'}, 'س':{isolated:'س',initial:'ﺳ',medial:'ﺴ',final:'ﺲ'}, 'ش':{isolated:'ش',initial:'ﺷ',medial:'ﺸ',final:'ﺶ'}, 'ص':{isolated:'ص',initial:'ﺻ',medial:'ﺼ',final:'ﺺ'}, 'ض':{isolated:'ض',initial:'ﺿ',medial:'ﻀ',final:'ﺾ'}, 'ط':{isolated:'ط',initial:'ﻃ',medial:'ﻄ',final:'ﻂ'}, 'ظ':{isolated:'ظ',initial:'ﻇ',medial:'ﻈ',final:'ﻆ'}, 'ه':{isolated:'ه',initial:'ﻫ',medial:'ﻬ',final:'ﻪ'}, 'ج':{isolated:'ج',initial:'ﺟ',medial:'ﺠ',final:'ﺞ'}, 'ح':{isolated:'ح',initial:'ﺣ',medial:'ﺤ',final:'ﺢ'}, 'خ':{isolated:'خ',initial:'ﺧ',medial:'ﺨ',final:'ﺦ'}, 'ث':{isolated:'ث',initial:'ﺛ',medial:'ﺜ',final:'ﺚ'}, 'ف':{isolated:'ف',initial:'ﻓ',medial:'ﻔ',final:'ﻒ'} };
+        const nonConnectors = ['ا','د','ذ','ر','ز','و','ؤ','آ','أ','إ'];
+
+        function updateForms(pNum) {
+            const slots = document.getElementById(`p${pNum}-slots`).children;
+            Array.from(slots).forEach((slot, i) => {
+                if(slot.children.length===0) return;
+                const card = slot.children[0]; const base = card.dataset.base;
+                const hasRight = (i>0 && slots[i-1].children.length>0); const hasLeft = (i<slots.length-1 && slots[i+1].children.length>0);
+                let isRightNonConn = false;
+                if(hasRight) { const rightBase = slots[i-1].children[0].dataset.base; if(nonConnectors.includes(rightBase)) isRightNonConn = true; }
+                let form = 'isolated';
+                if(!hasRight && hasLeft) form='initial'; else if(hasRight && hasLeft && !isRightNonConn) form='medial'; else if(hasRight && !hasLeft && !isRightNonConn) form='final'; else if(hasRight && isRightNonConn) form=hasLeft?'initial':'isolated';
+                if(letterForms[base] && letterForms[base][form]) card.textContent = letterForms[base][form] + card.dataset.harakat; else card.textContent = card.dataset.full;
+            });
+        }
+
+        // --- INTERACTION ---
+        function initTouchDrag(el) {
+            el.addEventListener('touchstart', (e) => { 
+                e.preventDefault(); const touch = e.changedTouches[0];
+                activeDrags[touch.identifier] = { el: el, startX: touch.clientX, startY: touch.clientY, startTime: Date.now(), origL: el.style.left, origT: el.style.top };
+                el.classList.add('touch-dragging'); moveElement(el, touch.clientX, touch.clientY); playSound('pop');
+            }, {passive:false});
+            el.addEventListener('touchmove', (e) => { 
+                e.preventDefault(); for (let i = 0; i < e.changedTouches.length; i++) {
+                    const touch = e.changedTouches[i]; if (activeDrags[touch.identifier]) moveElement(activeDrags[touch.identifier].el, touch.clientX, touch.clientY);
+                }
+            }, {passive:false});
+            el.addEventListener('touchend', (e) => { 
+                e.preventDefault(); for (let i = 0; i < e.changedTouches.length; i++) {
+                    const touch = e.changedTouches[i]; const data = activeDrags[touch.identifier];
+                    if (data) { handleDrop(data.el, touch.clientX, touch.clientY); delete activeDrags[touch.identifier]; }
+                }
+            });
+        }
+        function moveElement(el, x, y) { el.style.left=(x-25)+'px'; el.style.top=(y-50)+'px'; }
+        function handleDrop(el, x, y) {
+            el.classList.remove('touch-dragging'); el.style.display='none';
+            let target = document.elementFromPoint(x, y); el.style.display='';
+            if(target && target.closest('.slot')) {
+                const slot = target.closest('.slot');
+                if(slot.children.length===0) {
+                    const elP = el.id.startsWith('p1') ? 1 : 2; const slotP = slot.parentElement.id.includes('p1') ? 1 : 2;
+                    if(elP === slotP) { placeLetter(el, slot); return; }
+                }
+            }
+            el.style.position=''; el.style.left=''; el.style.top='';
+        }
+        function placeLetter(el, slot) {
+            const pNum = slot.parentElement.id.includes('p1') ? 1 : 2;
+            const clone = el.cloneNode(true); clone.id = ""; clone.dataset.oid = el.id; 
+            clone.classList.remove('touch-dragging'); clone.style.position=''; clone.onclick = (e) => { e.stopPropagation(); restoreLetter(clone, slot, pNum); };
+            slot.appendChild(clone); el.classList.add('hidden'); updateForms(pNum); checkCompletion(pNum);
+        }
+        function removeLetter(e) {
+            const slot = e.target.closest('.slot'); if(slot.children.length===0) return;
+            const pNum = slot.parentElement.id.includes('p1') ? 1 : 2; restoreLetter(slot.children[0], slot, pNum);
+        }
+        function restoreLetter(child, slot, pNum) {
+            document.getElementById(child.dataset.oid).classList.remove('hidden');
+            slot.removeChild(child); slot.classList.remove('wrong','correct');
+            updateForms(pNum); document.getElementById(`p${pNum}-check`).style.display='none';
+        }
+        function checkCompletion(pNum) { if(document.getElementById(`p${pNum}-slots`).querySelectorAll('.slot:empty').length===0) document.getElementById(`p${pNum}-check`).style.display='inline-block'; }
+
+        function handleCheck(e, pNum) { e.preventDefault(); playSound('pop'); checkAnswer(pNum); }
+        function checkAnswer(pNum) {
+            const pIdx = pNum - 1; const lvl = appState.players[pIdx].currentWord; const slots = document.getElementById(`p${pNum}-slots`).children; let correct = true;
+            Array.from(slots).forEach((s, i) => {
+                if(s.children.length===0) { correct=false; return; }
+                if(s.children[0].dataset.full === lvl.structure[i].full) { s.classList.add('correct'); s.classList.remove('wrong'); }
+                else { s.classList.add('wrong'); s.classList.remove('correct'); correct=false; }
+            });
+
+            if(correct) {
+                const bonus = 10; appState.players[pIdx].score += bonus; 
+                document.getElementById(`p${pNum}-score-disp`).innerText = appState.players[pIdx].score;
+                document.getElementById(`p${pNum}-msg`).innerText = "MUMTAZ! 🎉";
+                document.getElementById(`p${pNum}-msg`).style.color = "var(--primary)";
+                document.getElementById(`p${pNum}-check`).style.display = 'none';
+                document.getElementById(`p${pNum}-hint`).style.display = 'block'; 
+                playSound('win'); confetti(); playTTS(pNum);
+                setTimeout(() => { appState.players[pIdx].wordIdx++; loadPlayerQuestion(pNum); }, 1500);
+            } else {
+                appState.players[pIdx].lives--; appState.players[pIdx].mistakes++;
+                document.getElementById(`p${pNum}-lives`).innerText = "❤️".repeat(appState.players[pIdx].lives) + "🖤".repeat(3-appState.players[pIdx].lives);
+                playSound('lose');
+                if(appState.players[pIdx].lives <= 0) {
+                    document.getElementById(`p${pNum}-msg`).innerText = "Game Over"; document.getElementById(`p${pNum}-msg`).style.color = "var(--wrong)";
+                    appState.players[pIdx].finished = true; document.getElementById(`p${pNum}-check`).style.display = 'none';
+                    document.getElementById(`p${pNum}-overlay`).innerHTML = `<div>❌ GAME OVER</div><div style="font-size:1rem;">Menunggu Waktu...</div>`;
+                    document.getElementById(`p${pNum}-overlay`).style.display = 'flex';
+                }
+            }
         }
 
         function startTimer() {
-            const el = document.getElementById('timer-display');
-            el.innerText = state.currentTime;
-            if(state.timerInterval) clearInterval(state.timerInterval);
-            state.timerInterval = setInterval(() => {
-                state.currentTime--;
-                el.innerText = state.currentTime;
-                if(state.currentTime <= 10) el.classList.add('text-red-500'); else el.classList.remove('text-red-500');
-                if(state.currentTime <= 0) { clearInterval(state.timerInterval); finishGame(); }
+            if(appState.interval) clearInterval(appState.interval);
+            appState.interval = setInterval(() => {
+                appState.timer--; document.getElementById('dispTimer').innerText = appState.timer;
+                if(appState.timer <= 0) { stopTimer(); showResult(); }
             }, 1000);
         }
+        function stopTimer() { clearInterval(appState.interval); }
 
-        function createBoard(pid) {
-            const div = document.createElement('div');
-            div.className = `flex-1 z-10 glass rounded-3xl shadow-xl border-4 ${pid===0?'border-emerald-500':'border-blue-500'} flex flex-col overflow-hidden relative transition-all`;
-            div.id = `board-${pid}`;
-            div.innerHTML = `
-                <div class="h-[35%] flex flex-row items-center bg-slate-50 border-b-2 border-slate-200">
-                    <div class="w-2/3 h-full flex items-center justify-center relative overflow-visible">
-                        <h2 id="target-${pid}" class="text-7xl md:text-8xl font-bold text-slate-800 drop-shadow-sm select-none leading-[2.0] pt-12 pb-4 px-2">...</h2>
-                    </div>
-                    <div class="w-1/3 h-full flex items-center justify-center border-r-2 border-slate-200 bg-emerald-50/50">
-                        <p id="mean-${pid}" class="text-4xl md:text-5xl font-latin font-bold text-emerald-700 leading-none px-2 text-center drop-shadow-sm">...</p>
-                    </div>
-                </div>
-                <div class="flex-1 bg-slate-100 flex items-center justify-center p-2">
-                    <div id="slots-${pid}" class="flex flex-wrap justify-center gap-2 w-full" dir="rtl"></div>
-                </div>
-                <div class="h-[30%] bg-slate-200 border-t-2 border-slate-300 p-4 overflow-y-auto">
-                    <div id="pool-${pid}" class="flex flex-wrap justify-center gap-3 min-h-full content-start pb-32"></div>
-                </div>
-            `;
-            document.getElementById('game-container').appendChild(div);
-        }
-
-        function updateLevel(pid) {
-            const score = state.players[pid].score;
-            let newLevel = 1;
-            if(score >= 150) newLevel = 3; else if(score >= 60) newLevel = 2;
-            if(newLevel > state.players[pid].level) {
-                state.players[pid].level = newLevel;
-                const badge = document.getElementById(`lvl-p${pid===0?1:2}`);
-                badge.innerText = `LV ${newLevel}`;
-                badge.className = `text-[10px] px-2 rounded-full text-white ${newLevel===3?'bg-red-600':(newLevel===2?'bg-yellow-500':'bg-emerald-600')} anim-levelup`;
-                playSound('pop');
-            }
-        }
-
-        function loadWord(pid) {
-            updateLevel(pid);
-            const lvl = state.players[pid].level;
-            const idx = state.players[pid].idx % state.playlist.length;
-            const word = state.playlist[idx];
-            const tEl = document.getElementById(`target-${pid}`);
-            tEl.innerText = word.t;
-            tEl.classList.remove('animate-pop'); void tEl.offsetWidth; tEl.classList.add('animate-pop');
-
-            const mEl = document.getElementById(`mean-${pid}`);
-            if(lvl === 3) { mEl.innerText = "???"; mEl.classList.add("text-slate-300"); } else { mEl.innerText = word.m; mEl.classList.remove("text-slate-300"); }
+        function showResult() {
+            stopTimer();
+            document.getElementById('result-overlay').style.display='flex';
+            const content = document.getElementById('resultContent');
+            let html = `<div><h1 style="color:var(--primary); font-family:'Amiri'; margin:0;">Waktu Habis!</h1></div><hr>`;
             
-            const sCont = document.getElementById(`slots-${pid}`);
-            const pCont = document.getElementById(`pool-${pid}`);
-            sCont.innerHTML = ''; pCont.innerHTML = '';
-
-            let items = [];
-            word.s.forEach((seg, i) => {
-                sCont.innerHTML += `<div class="flex flex-col items-center gap-1"><div id="slot-${pid}-${i}" data-exp="${seg.c}" data-fill="false" class="slot-zone w-16 h-16 md:w-20 md:h-20 bg-white border-2 border-dashed border-slate-400 rounded-xl flex items-center justify-center text-4xl text-slate-300 font-bold shadow-inner"></div><span class="text-xs text-slate-400 font-bold">${(i+1).toLocaleString('ar-EG')}</span></div>`;
-                items.push({c:seg.c});
-                seg.d.forEach(d => items.push({c:d}));
-            });
-
-            let extraCount = 0;
-            if(lvl === 2) extraCount = 1;
-            if(lvl === 3) extraCount = 2;
-            for(let i=0; i<extraCount; i++) {
-                const rndChar = extraChars.charAt(Math.floor(Math.random() * extraChars.length));
-                const harakat = ["َ", "ِ", "ُ", "ٌ", "ٍ"];
-                items.push({c: rndChar + harakat[Math.floor(Math.random()*harakat.length)] });
-            }
-
-            items.sort(() => Math.random() - 0.5);
-            items.forEach((it) => {
-                const el = document.createElement('div');
-                el.className = "draggable cursor-grab active:cursor-grabbing w-14 h-14 md:w-18 md:h-18 bg-white rounded-xl shadow-[0_4px_0_rgba(0,0,0,0.1)] border border-slate-300 flex items-center justify-center text-3xl md:text-4xl font-bold text-slate-700 select-none hover:-translate-y-1 transition-transform touch-none";
-                el.innerText = it.c; pCont.appendChild(el); initDrag(el, pid);
-            });
-        }
-
-        // --- MULTI-TOUCH & MOUSE DRAG LOGIC ---
-        function initDrag(el, pid) {
-            // MOUSE HANDLER (PC/Cursor)
-            el.addEventListener('mousedown', (e) => {
-                if(el.dataset.locked) return;
-                e.preventDefault();
-                
-                const rect = el.getBoundingClientRect();
-                const offset = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-                const startPar = el.parentNode;
-                const placeholder = el.cloneNode(true);
-                placeholder.style.opacity = '0';
-                startPar.insertBefore(placeholder, el);
-                
-                el.style.width = rect.width + 'px'; el.style.height = rect.height + 'px';
-                el.classList.add('dragging-active');
-                document.body.appendChild(el);
-                
-                function onMove(em) {
-                    el.style.left = (em.clientX - offset.x) + 'px';
-                    el.style.top = (em.clientY - offset.y) + 'px';
-                }
-                
-                function onUp(em) {
-                    document.removeEventListener('mousemove', onMove);
-                    document.removeEventListener('mouseup', onUp);
-                    el.style.display = 'none';
-                    const below = document.elementFromPoint(em.clientX, em.clientY);
-                    el.style.display = 'flex';
-                    
-                    let ok = false;
-                    if(below) {
-                        const slot = below.closest('.slot-zone');
-                        if(slot && slot.id.startsWith(`slot-${pid}`) && slot.dataset.fill === "false") {
-                            if(el.innerText === slot.dataset.exp) {
-                                successDrop(slot, el, pid, placeholder); ok = true;
-                            } else failDrop(slot);
-                        }
-                    }
-                    if(!ok) resetDrag(el, placeholder, startPar);
-                }
-                
-                document.addEventListener('mousemove', onMove);
-                document.addEventListener('mouseup', onUp);
-                onMove(e);
-            });
-
-            // TOUCH HANDLER (IFP Multi-User)
-            el.addEventListener('touchstart', (e) => {
-                if(el.dataset.locked) return;
-                e.preventDefault();
-                
-                for (let i = 0; i < e.changedTouches.length; i++) {
-                    const touch = e.changedTouches[i];
-                    const touchId = touch.identifier;
-                    const rect = el.getBoundingClientRect();
-                    
-                    // State for this specific touch
-                    const state = {
-                        el: el,
-                        startPar: el.parentNode,
-                        offX: touch.clientX - rect.left,
-                        offY: touch.clientY - rect.top,
-                        placeholder: el.cloneNode(true)
-                    };
-                    
-                    state.placeholder.style.opacity = '0';
-                    state.startPar.insertBefore(state.placeholder, el);
-                    
-                    el.style.width = rect.width + 'px'; el.style.height = rect.height + 'px';
-                    el.classList.add('dragging-active');
-                    document.body.appendChild(el);
-                    
-                    activeTouches[touchId] = state;
-                    
-                    // Initial move
-                    el.style.left = (touch.clientX - state.offX) + 'px';
-                    el.style.top = (touch.clientY - state.offY) + 'px';
-                }
-            }, {passive: false});
-
-            el.addEventListener('touchmove', (e) => {
-                e.preventDefault();
-                for (let i = 0; i < e.changedTouches.length; i++) {
-                    const touch = e.changedTouches[i];
-                    const state = activeTouches[touch.identifier];
-                    if (state) {
-                        state.el.style.left = (touch.clientX - state.offX) + 'px';
-                        state.el.style.top = (touch.clientY - state.offY) + 'px';
-                    }
-                }
-            }, {passive: false});
-
-            el.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                for (let i = 0; i < e.changedTouches.length; i++) {
-                    const touch = e.changedTouches[i];
-                    const state = activeTouches[touch.identifier];
-                    if (state) {
-                        state.el.style.display = 'none';
-                        const below = document.elementFromPoint(touch.clientX, touch.clientY);
-                        state.el.style.display = 'flex';
-                        
-                        let ok = false;
-                        if (below) {
-                            const slot = below.closest('.slot-zone');
-                            if (slot && slot.id.startsWith(`slot-${pid}`) && slot.dataset.fill === "false") {
-                                if (state.el.innerText === slot.dataset.exp) {
-                                    successDrop(slot, state.el, pid, state.placeholder);
-                                    ok = true;
-                                } else failDrop(slot);
-                            }
-                        }
-                        if (!ok) resetDrag(state.el, state.placeholder, state.startPar);
-                        delete activeTouches[touch.identifier];
-                    }
-                }
-            });
-        }
-
-        function resetDrag(el, ph, par) {
-            if(ph && par) { 
-                el.classList.remove('dragging-active'); el.style.position=''; el.style.left=''; el.style.top=''; el.style.width=''; el.style.height=''; 
-                par.insertBefore(el, ph); ph.remove(); 
-            } else el.remove(); 
-        }
-
-        function successDrop(slot, el, pid, ph) {
-            playSound('pop'); 
-            if(ph) ph.remove();
-            el.classList.remove('dragging-active'); el.style.position='static'; el.style.width='100%'; el.style.height='100%';
-            el.classList.add('bg-emerald-500', 'text-white', 'animate-pop', 'cursor-default');
-            el.classList.remove('bg-white', 'text-slate-700', 'cursor-grab', 'shadow-[0_4px_0_rgba(0,0,0,0.1)]');
-            el.dataset.locked = true;
-            
-            // Reset event listeners to prevent moving again
-            const newEl = el.cloneNode(true);
-            slot.innerHTML = ''; slot.appendChild(newEl);
-            el.remove(); // remove old draggable from body
-
-            slot.classList.remove('border-dashed', 'border-slate-400'); slot.classList.add('border-emerald-500', 'border-solid');
-            slot.dataset.fill = "true"; checkWin(pid);
-        }
-
-        function failDrop(slot) { playSound('err'); slot.classList.add('bg-red-200'); setTimeout(()=>slot.classList.remove('bg-red-200'),300); }
-        
-        function checkWin(pid) {
-            const all = document.querySelectorAll(`#slots-${pid} .slot-zone`);
-            if(Array.from(all).every(s=>s.dataset.fill==="true")) {
-                state.players[pid].score += 10; state.players[pid].idx++;
-                document.getElementById(pid===0?'score-p1':'score-p2').innerText = state.players[pid].score;
-                playSound('win'); document.getElementById(`board-${pid}`).classList.add('flash-anim');
-                setTimeout(()=>document.getElementById(`board-${pid}`).classList.remove('flash-anim'),500);
-                
-                // TIME BONUS
-                const lvl = state.players[pid].level;
-                let bonus = 5;
-                if(lvl === 2) bonus = 3;
-                if(lvl === 3) bonus = 1;
-                state.currentTime += bonus;
-                const tDisplay = document.getElementById('timer-display');
-                tDisplay.innerText = state.currentTime;
-                tDisplay.classList.add('timer-bonus');
-                setTimeout(() => tDisplay.classList.remove('timer-bonus'), 500);
-
-                const idx = (state.players[pid].idx - 1) % state.playlist.length;
-                setTimeout(() => speakArabic(state.playlist[idx].t), 300);
-                if(lvl === 3) { const mEl = document.getElementById(`mean-${pid}`); mEl.innerText = state.playlist[idx].m; mEl.classList.remove("text-slate-300"); }
-                setTimeout(()=>loadWord(pid), 1000);
-            }
-        }
-
-        function finishGame() {
-            showScreen('screen-result'); try { confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } }); } catch(e){}
-            document.getElementById('played-theme-name').innerText = state.activeThemeName;
-            const p1 = state.players[0]; const p2 = state.players[1]; const podium = document.getElementById('podium-area');
-            if(state.numPlayers === 1) {
-                podium.innerHTML = `<div class="flex flex-col items-center animate-pop"><div class="text-6xl mb-2">👑</div><div class="bg-slate-800 p-6 rounded-2xl border-4 border-yellow-400 text-center min-w-[200px]"><div class="text-emerald-400 font-bold text-xl">${p1.name}</div><div class="text-6xl font-bold text-white">${p1.score}</div><div class="text-sm text-slate-400">Poin</div></div></div>`;
+            if(appState.mode === 1) {
+                addToLeaderboard(appState.players[0].name, appState.players[0].score);
+                html += `<div>Skor Akhir: <b style="font-size:2rem">${appState.players[0].score}</b></div><div style="font-size:0.9rem">Salah: ${appState.players[0].mistakes}</div>`;
             } else {
-                const p1Win = p1.score >= p2.score; const p2Win = p2.score > p1.score;
-                podium.innerHTML = `<div class="flex flex-col items-center ${p2Win?'scale-110 z-10':''}"><div class="text-4xl mb-1">${p2Win?'👑':''}</div><div class="bg-slate-800 p-4 rounded-2xl border-4 ${p2Win?'border-yellow-400':'border-blue-500'} text-center min-w-[150px]"><div class="text-blue-300 font-bold">${p2.name}</div><div class="text-4xl font-bold text-white">${p2.score}</div></div></div><div class="flex flex-col items-center ${p1Win?'scale-110 z-10':''}"><div class="text-4xl mb-1">${p1Win?'👑':''}</div><div class="bg-slate-800 p-4 rounded-2xl border-4 ${p1Win?'border-yellow-400':'border-emerald-500'} text-center min-w-[150px]"><div class="text-emerald-300 font-bold">${p1.name}</div><div class="text-4xl font-bold text-white">${p1.score}</div></div></div>`;
+                addToLeaderboard(appState.players[0].name, appState.players[0].score); addToLeaderboard(appState.players[1].name, appState.players[1].score);
+                const p1 = appState.players[0]; const p2 = appState.players[1];
+                let winner = "Seri!"; let wColor = "#555";
+                if(p1.score > p2.score) { winner = p1.name + " Menang!"; wColor= "var(--primary)"; }
+                else if(p2.score > p1.score) { winner = p2.name + " Menang!"; wColor= "var(--accent)"; }
+                html += `<div style="display:flex; justify-content:space-around; align-items:center; margin-top:20px;"><div><h3>${p1.name}</h3><h1 style="color:var(--primary)">${p1.score}</h1><small>Salah: ${p1.mistakes}</small></div><div style="font-size:1.5rem; color:#ccc;">VS</div><div><h3>${p2.name}</h3><h1 style="color:var(--accent)">${p2.score}</h1><small>Salah: ${p2.mistakes}</small></div></div><h1 style="color:${wColor}; margin-top:20px; font-family:'Changa One'">${winner}</h1>`;
             }
-            document.getElementById('result-leaderboard').innerHTML = state.players.slice(0, state.numPlayers).map((p,i) => `<tr class="border-b border-white/10"><td class="py-2 px-2 text-yellow-300 font-bold">#${i+1}</td><td class="py-2 px-2 text-white">${p.name}</td><td class="py-2 px-2 text-right font-bold text-emerald-300">${p.score}</td></tr>`).join('');
+            content.innerHTML = html;
+            sendToGoogleSheet();
+        }
+        function addToLeaderboard(name, score) { if(score > 0) { localHighScores.push({name, score}); localHighScores.sort((a, b) => b.score - a.score); localHighScores = localHighScores.slice(0, 5); } }
+        
+        // --- MISSING FUNCTIONS RESTORED ---
+        function loadScores() {
+            const stored = localStorage.getItem('jawaraScores');
+            if(stored) localHighScores = JSON.parse(stored);
+        }
+        function saveScore(name, score) {
+            if(score <= 0) return;
+            localHighScores.push({name, score});
+            localHighScores.sort((a, b) => b.score - a.score);
+            localHighScores = localHighScores.slice(0, 3); // KEEP TOP 3
+            localStorage.setItem('jawaraScores', JSON.stringify(localHighScores));
         }
 
-        function openInstructions() { document.getElementById('modal-help').classList.remove('hidden'); }
-        function closeInstructions() { document.getElementById('modal-help').classList.add('hidden'); }
-        function speakArabic(text) { if ('speechSynthesis' in window) { const u = new SpeechSynthesisUtterance(text); u.lang = 'ar-SA'; u.rate = 0.9; window.speechSynthesis.speak(u); } }
-        function confirmHome() { if(confirm("Kembali ke menu utama?")) location.reload(); }
-        const actx = new (window.AudioContext||window.webkitAudioContext)();
-        function playSound(t) { if(actx.state==='suspended') actx.resume(); const o=actx.createOscillator(), g=actx.createGain(); o.connect(g); g.connect(actx.destination); const now=actx.currentTime; if(t==='pop'){ o.frequency.setValueAtTime(600,now); o.frequency.exponentialRampToValueAtTime(1000,now+0.1); g.gain.setValueAtTime(0.05,now); g.gain.exponentialRampToValueAtTime(0.001,now+0.1); o.start(now); o.stop(now+0.1); } else if(t==='err'){ o.type='sawtooth'; o.frequency.setValueAtTime(150,now); g.gain.setValueAtTime(0.05,now); g.gain.linearRampToValueAtTime(0,now+0.2); o.start(now); o.stop(now+0.2); } else if(t==='win'){ o.type='triangle'; o.frequency.setValueAtTime(523,now); o.frequency.setValueAtTime(784,now+0.1); g.gain.setValueAtTime(0.05,now); g.gain.linearRampToValueAtTime(0,now+0.4); o.start(now); o.stop(now+0.4); } }
+        function openLeaderboard(){ const list = document.getElementById('lb-list'); const msg = document.getElementById('lb-empty-msg'); list.innerHTML = ""; if(localHighScores.length === 0) { msg.style.display = "block"; } else { msg.style.display = "none"; localHighScores.forEach((item, idx) => { const li = document.createElement('li'); li.className = 'lb-item'; li.innerHTML = `<span>${idx+1}. ${item.name}</span><span>${item.score}</span>`; list.appendChild(li); }); } document.getElementById('leaderboard-modal').style.display='flex'; }
+        function sendToGoogleSheet() { if(!GOOGLE_SCRIPT_URL) return; const playersToSend = []; playersToSend.push(appState.players[0]); if(appState.mode === 2) playersToSend.push(appState.players[1]); playersToSend.forEach(p => { if(!p.name) return; const data = { date: new Date().toLocaleString(), name: p.name, score: p.score, mistakes: p.mistakes, mode: appState.mode === 1 ? "1 Player" : "2 Player", level: "Sesi " + (appState.currentThemeIdx + 1) }; fetch(GOOGLE_SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).then(() => console.log("Sent")).catch(e => console.error(e)); }); }
+        function backToLevels() { document.getElementById('result-overlay').style.display='none'; showScreen('level-screen'); }
+        function confirmExit() { showScreen('entry-screen'); }
+        function showToast(t,c) { const x=document.getElementById('toast'); x.innerText=t; x.style.background=c; x.className="show"; setTimeout(()=>{x.className=x.className.replace("show","")},3000); }
+        function openSettings(){document.getElementById('settings-modal').style.display='flex'}
+        function closeSettings(){ const d=document.getElementsByName('time'); for(let r of d) if(r.checked) appState.timeLimit=r.value; const s=document.getElementsByName('sound'); for(let r of s) if(r.checked) appState.sound=r.value; document.getElementById('settings-modal').style.display='none'; showToast("Pengaturan Disimpan!"); }
+        function closeLeaderboard(){document.getElementById('leaderboard-modal').style.display='none'}
+        function playTTS(pNum) { 
+            if(appState.sound === 'off') return;
+            const pIdx = pNum; 
+            if(appState.players[pIdx] && appState.players[pIdx].currentWord) {
+                const u=new SpeechSynthesisUtterance(appState.players[pIdx].currentWord.word); 
+                u.lang='ar-SA'; u.rate=0.8; window.speechSynthesis.speak(u); 
+            }
+        }
+
+        // --- NEW FUNCTIONS ---
+        function openInstructions() {
+            document.getElementById('instruction-modal').style.display = 'flex';
+        }
+        function closeInstructions() {
+            document.getElementById('instruction-modal').style.display = 'none';
+        }
     </script>
 </body>
 </html>
