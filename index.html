@@ -50,7 +50,6 @@
         .btn-blue { background: linear-gradient(180deg, #3498db 0%, #2980b9 100%); }
         .btn-orange { background: linear-gradient(180deg, #f1c40f 0%, #f39c12 100%); }
         .btn-red { background: linear-gradient(180deg, #e74c3c 0%, #c0392b 100%); }
-        .btn-purple { background: linear-gradient(180deg, #9b59b6 0%, #8e44ad 100%); }
 
         .menu-title { font-family: 'Changa One', cursive; font-size: 2.5rem; color: var(--secondary); margin-bottom: 20px; text-shadow: 2px 2px 0 white; text-align: center; }
         .input-box { padding: 15px; border-radius: 15px; border: 3px solid #ccc; font-size: 1.2rem; width: 100%; max-width: 300px; text-align: center; font-family: 'Fredoka', sans-serif; outline: none; margin-bottom: 10px; }
@@ -63,8 +62,6 @@
         .logo-img { width: 140px; margin-bottom: 20px; filter: drop-shadow(0 5px 5px rgba(0,0,0,0.1)); display: block; margin: 0 auto 20px; }
         .school-info { font-family: sans-serif; color: white; margin-top: 20px; font-weight: bold; font-size: 1.2rem; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; text-align: center; }
         .dev-team { font-size: 0.9rem; color: white; margin-top: 5px; text-shadow: 1px 1px 2px black; text-align: center; }
-        
-        /* Judul Gambar */
         .main-title-img {
             width: 300px; max-width: 90%;
             display: block; margin: 10px auto;
@@ -192,8 +189,8 @@
 </head>
 <body>
 
-    <!-- 1. SPLASH (WAJIB KLIK TOMBOL) -->
-    <div id="splash-screen" class="screen active">
+    <!-- 1. SPLASH -->
+    <div id="splash-screen" class="screen active" onclick="initAudioContext()">
         <div class="audio-check" onclick="testSound(event)">🔊</div>
         <img src="logo.png" alt="Logo Sekolah" class="logo-img" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2602/2602414.png'">
         
@@ -215,8 +212,8 @@
         <button class="btn-metallic btn-blue" onclick="selectMode(1)">👤 1 Player</button>
         <button class="btn-metallic btn-orange" onclick="selectMode(2)">👥 2 Player</button>
         
-        <!-- Tombol Petunjuk -->
-        <button class="btn-metallic btn-purple" onclick="openInstructions()" style="margin-top: 20px; font-size: 1rem; padding: 10px 20px;">❓ Petunjuk Permainan</button>
+        <!-- Tombol Petunjuk (KEMBALI MERAH) -->
+        <button class="btn-metallic btn-red" onclick="openInstructions()" style="margin-top: 20px; font-size: 1rem; padding: 10px 20px;">❓ Petunjuk Permainan</button>
     </div>
 
     <!-- 3. INPUT NAMA -->
@@ -271,16 +268,13 @@
                 </div>
                 <div class="game-card">
                     <div class="image-preview"><img id="p1-img" src=""></div>
-                    
                     <div class="word-meaning" id="p1-meaning"></div>
                     <div id="p1-hint" class="word-hint"></div>
                     <button class="btn-metallic btn-blue" style="font-size:0.8rem; padding:5px 15px; min-width:120px; width:auto; margin: 5px auto; display: block;" onclick="playTTS(0)">🔊 Dengar Kata</button>
                 </div>
                 <div class="slots-container" id="p1-slots"></div>
                 <div class="letters-pool" id="p1-pool"></div>
-                
                 <button id="p1-check" class="btn-metallic btn-green" onpointerdown="handleCheck(event, 1)" style="display:none; transform:scale(0.8); margin: 2px;">Cek Jawaban</button>
-                
                 <div id="p1-msg" style="margin-top:5px; font-weight:bold; height:20px;"></div>
             </div>
 
@@ -424,6 +418,7 @@
             if (sound) {
                 const clone = sound.cloneNode();
                 clone.play().catch(e => {
+                    // Fallback to synth if file fails
                     if(type === 'pop') playTone(600, 'triangle');
                     if(type === 'win') { playTone(500, 'sine'); setTimeout(()=>playTone(800, 'sine'), 100); setTimeout(()=>playTone(1000, 'sine'), 200); }
                     if(type === 'lose') { playTone(300, 'sawtooth'); setTimeout(()=>playTone(200, 'sawtooth'), 200); }
@@ -461,7 +456,6 @@
             { theme: "Warna", items: [["أَسْوَدُ", "Hitam"], ["أَبْيَضُ", "Putih"], ["أَحْمَرُ", "Merah"], ["أَصْفَرُ", "Kuning"], ["أَخْضَرُ", "Hijau"], ["أَزْرَقُ", "Biru"], ["أَسْمَرُ", "Coklat"], ["أَرْمَدُ", "Abu-abu"], ["قَرَنْفُلِيٌّ", "Pink"], ["بَنَفْسَجِيٌّ", "Ungu"]] }
         ];
 
-        // Process Data
         const vocabData = rawVocabData.map(theme => {
             return {
                 theme: theme.theme,
@@ -500,7 +494,6 @@
 
         // --- INIT & NAVIGATION ---
         window.onload = function() {
-            // Hapus timeout splash screen karena sekarang manual klik
             renderThemeButtons();
             loadScores(); 
 
@@ -510,12 +503,20 @@
             });
             // Typing Sound
             document.addEventListener('input', function(e) {
-                if (e.target.tagName === 'INPUT' && e.target.type === 'text') playSound('pop');
+                if (e.target.tagName === 'INPUT' && e.target.type === 'text') {
+                    const now = Date.now();
+                    if(now - lastTypeTime > 100) { 
+                        playSound('pop');
+                        lastTypeTime = now;
+                    }
+                }
             });
             // Check Buttons
             document.getElementById('p1-check').addEventListener('pointerdown', function(e) { handleCheck(e, 1); });
             document.getElementById('p2-check').addEventListener('pointerdown', function(e) { handleCheck(e, 2); });
         };
+        
+        let lastTypeTime = 0;
 
         function setAppMode(mode) {
             appState.appMode = mode;
@@ -595,7 +596,6 @@
             appState.players.forEach(p => { 
                 p.score=0; p.mistakes=0; p.wordIdx = 0; p.lives = 3; p.finished = false;
             });
-            // Gunakan timeLimit dari settings
             appState.timer = parseInt(appState.timeLimit);
             document.getElementById('dispTimer').innerText = appState.timer;
             loadPlayerQuestion(1);
@@ -641,7 +641,6 @@
             document.getElementById(`p${pNum}-meaning`).innerText = lvl.meaning;
             
             const hintEl = document.getElementById(`p${pNum}-hint`);
-            // Check timeLimit for Hint Logic (>= 120 means Easy/Hint ON)
             if (parseInt(appState.timeLimit) >= 120) { hintEl.innerText = lvl.word; hintEl.style.display = 'block'; }
             else { hintEl.innerText = lvl.word; hintEl.style.display = 'none'; }
             
@@ -789,9 +788,8 @@
             content.innerHTML = html;
             sendToGoogleSheet();
         }
-        function addToLeaderboard(name, score) { if(score > 0) { localHighScores.push({name, score}); localHighScores.sort((a, b) => b.score - a.score); localHighScores = localHighScores.slice(0, 5); } }
-        
-        // --- MISSING FUNCTIONS RESTORED ---
+
+        // --- PERSISTENT LEADERBOARD ---
         function loadScores() {
             const stored = localStorage.getItem('jawaraScores');
             if(stored) localHighScores = JSON.parse(stored);
@@ -803,15 +801,32 @@
             localHighScores = localHighScores.slice(0, 3); // KEEP TOP 3
             localStorage.setItem('jawaraScores', JSON.stringify(localHighScores));
         }
+        function addToLeaderboard(name, score) {
+            saveScore(name, score);
+        }
+        function openLeaderboard(){
+            loadScores(); // Refresh from storage
+            const list = document.getElementById('lb-list'); const msg = document.getElementById('lb-empty-msg'); list.innerHTML = "";
+            if(localHighScores.length === 0) { msg.style.display = "block"; } else { msg.style.display = "none"; localHighScores.forEach((item, idx) => { const li = document.createElement('li'); li.className = 'lb-item'; li.innerHTML = `<span>${idx+1}. ${item.name}</span><span>${item.score}</span>`; list.appendChild(li); }); }
+            document.getElementById('leaderboard-modal').style.display='flex';
+        }
 
-        function openLeaderboard(){ const list = document.getElementById('lb-list'); const msg = document.getElementById('lb-empty-msg'); list.innerHTML = ""; if(localHighScores.length === 0) { msg.style.display = "block"; } else { msg.style.display = "none"; localHighScores.forEach((item, idx) => { const li = document.createElement('li'); li.className = 'lb-item'; li.innerHTML = `<span>${idx+1}. ${item.name}</span><span>${item.score}</span>`; list.appendChild(li); }); } document.getElementById('leaderboard-modal').style.display='flex'; }
         function sendToGoogleSheet() { if(!GOOGLE_SCRIPT_URL) return; const playersToSend = []; playersToSend.push(appState.players[0]); if(appState.mode === 2) playersToSend.push(appState.players[1]); playersToSend.forEach(p => { if(!p.name) return; const data = { date: new Date().toLocaleString(), name: p.name, score: p.score, mistakes: p.mistakes, mode: appState.mode === 1 ? "1 Player" : "2 Player", level: "Sesi " + (appState.currentThemeIdx + 1) }; fetch(GOOGLE_SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).then(() => console.log("Sent")).catch(e => console.error(e)); }); }
         function backToLevels() { document.getElementById('result-overlay').style.display='none'; showScreen('level-screen'); }
         function confirmExit() { showScreen('entry-screen'); }
         function showToast(t,c) { const x=document.getElementById('toast'); x.innerText=t; x.style.background=c; x.className="show"; setTimeout(()=>{x.className=x.className.replace("show","")},3000); }
         function openSettings(){document.getElementById('settings-modal').style.display='flex'}
-        function closeSettings(){ const d=document.getElementsByName('time'); for(let r of d) if(r.checked) appState.timeLimit=r.value; const s=document.getElementsByName('sound'); for(let r of s) if(r.checked) appState.sound=r.value; document.getElementById('settings-modal').style.display='none'; showToast("Pengaturan Disimpan!"); }
+        function closeSettings(){ const d=document.getElementsByName('diff'); for(let r of d) if(r.checked) appState.difficulty=r.value; const s=document.getElementsByName('sound'); for(let r of s) if(r.checked) appState.sound=r.value; document.getElementById('settings-modal').style.display='none'; showToast("Pengaturan Disimpan!"); }
         function closeLeaderboard(){document.getElementById('leaderboard-modal').style.display='none'}
+        
+        // NEW FUNCTIONS
+        function openInstructions() {
+            document.getElementById('instruction-modal').style.display = 'flex';
+        }
+        function closeInstructions() {
+            document.getElementById('instruction-modal').style.display = 'none';
+        }
+
         function playTTS(pNum) { 
             if(appState.sound === 'off') return;
             const pIdx = pNum; 
@@ -819,14 +834,6 @@
                 const u=new SpeechSynthesisUtterance(appState.players[pIdx].currentWord.word); 
                 u.lang='ar-SA'; u.rate=0.8; window.speechSynthesis.speak(u); 
             }
-        }
-
-        // --- NEW FUNCTIONS ---
-        function openInstructions() {
-            document.getElementById('instruction-modal').style.display = 'flex';
-        }
-        function closeInstructions() {
-            document.getElementById('instruction-modal').style.display = 'none';
         }
     </script>
 </body>
