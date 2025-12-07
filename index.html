@@ -189,8 +189,8 @@
 </head>
 <body>
 
-    <!-- 1. SPLASH -->
-    <div id="splash-screen" class="screen active" onclick="initAudioContext()">
+    <!-- 1. SPLASH (WAJIB KLIK TOMBOL) -->
+    <div id="splash-screen" class="screen active">
         <div class="audio-check" onclick="testSound(event)">🔊</div>
         <img src="logo.png" alt="Logo Sekolah" class="logo-img" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2602/2602414.png'">
         
@@ -268,13 +268,22 @@
                 </div>
                 <div class="game-card">
                     <div class="image-preview"><img id="p1-img" src=""></div>
+                    
+                    <!-- NEW: ARTI INDONESIA -->
                     <div class="word-meaning" id="p1-meaning"></div>
+                    
+                    <!-- HINT ELEMENT -->
                     <div id="p1-hint" class="word-hint"></div>
+                    
+                    <!-- PERBAIKAN POSISI TOMBOL AUDIO -->
                     <button class="btn-metallic btn-blue" style="font-size:0.8rem; padding:5px 15px; min-width:120px; width:auto; margin: 5px auto; display: block;" onclick="playTTS(0)">🔊 Dengar Kata</button>
                 </div>
                 <div class="slots-container" id="p1-slots"></div>
                 <div class="letters-pool" id="p1-pool"></div>
+                
+                <!-- Tombol Cek (Margin adjusted) -->
                 <button id="p1-check" class="btn-metallic btn-green" onpointerdown="handleCheck(event, 1)" style="display:none; transform:scale(0.8); margin: 2px;">Cek Jawaban</button>
+                
                 <div id="p1-msg" style="margin-top:5px; font-weight:bold; height:20px;"></div>
             </div>
 
@@ -291,13 +300,22 @@
                 </div>
                 <div class="game-card">
                     <div class="image-preview"><img id="p2-img" src=""></div>
+                    
+                    <!-- NEW: ARTI INDONESIA -->
                     <div class="word-meaning" id="p2-meaning"></div>
+                    
+                    <!-- HINT ELEMENT -->
                     <div id="p2-hint" class="word-hint"></div>
+                    
+                    <!-- PERBAIKAN POSISI TOMBOL AUDIO -->
                     <button class="btn-metallic btn-blue" style="font-size:0.8rem; padding:5px 15px; min-width:120px; width:auto; margin: 5px auto; display: block;" onclick="playTTS(1)">🔊 Dengar Kata</button>
                 </div>
                 <div class="slots-container" id="p2-slots"></div>
                 <div class="letters-pool" id="p2-pool"></div>
+                
+                <!-- Tombol Cek (Margin adjusted) -->
                 <button id="p2-check" class="btn-metallic btn-green" onpointerdown="handleCheck(event, 2)" style="display:none; transform:scale(0.8); margin: 2px;">Cek Jawaban</button>
+                
                 <div id="p2-msg" style="margin-top:5px; font-weight:bold; height:20px;"></div>
             </div>
         </div>
@@ -456,6 +474,7 @@
             { theme: "Warna", items: [["أَسْوَدُ", "Hitam"], ["أَبْيَضُ", "Putih"], ["أَحْمَرُ", "Merah"], ["أَصْفَرُ", "Kuning"], ["أَخْضَرُ", "Hijau"], ["أَزْرَقُ", "Biru"], ["أَسْمَرُ", "Coklat"], ["أَرْمَدُ", "Abu-abu"], ["قَرَنْفُلِيٌّ", "Pink"], ["بَنَفْسَجِيٌّ", "Ungu"]] }
         ];
 
+        // Process Data
         const vocabData = rawVocabData.map(theme => {
             return {
                 theme: theme.theme,
@@ -502,6 +521,7 @@
                 if (e.target.closest('.btn-metallic, .level-card, .nav-btn, .icon-btn, .mode-btn')) playSound('pop');
             });
             // Typing Sound
+            let lastTypeTime = 0;
             document.addEventListener('input', function(e) {
                 if (e.target.tagName === 'INPUT' && e.target.type === 'text') {
                     const now = Date.now();
@@ -515,8 +535,6 @@
             document.getElementById('p1-check').addEventListener('pointerdown', function(e) { handleCheck(e, 1); });
             document.getElementById('p2-check').addEventListener('pointerdown', function(e) { handleCheck(e, 2); });
         };
-        
-        let lastTypeTime = 0;
 
         function setAppMode(mode) {
             appState.appMode = mode;
@@ -573,9 +591,9 @@
         function selectMode(m) {
             appState.mode = m;
             const container = document.getElementById('inputContainer'); container.innerHTML = '';
-            container.innerHTML += `<input type="text" id="name1" class="input-box" placeholder="Nama Pemain 1" oninput="playSound('pop')">`;
+            container.innerHTML += `<input type="text" id="name1" class="input-box" placeholder="Nama Pemain 1">`;
             if(m === 2) {
-                container.innerHTML += `<input type="text" id="name2" class="input-box" placeholder="Nama Pemain 2" oninput="playSound('pop')">`;
+                container.innerHTML += `<input type="text" id="name2" class="input-box" placeholder="Nama Pemain 2">`;
                 document.getElementById('entryTitle').innerText = "Masukkan Nama Pemain";
             } else { document.getElementById('entryTitle').innerText = "Siapa Namamu?"; }
             showScreen('entry-screen');
